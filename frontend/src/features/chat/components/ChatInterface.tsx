@@ -220,7 +220,8 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
       return;
     }
 
-    const wsUrl = `ws://localhost:8000/ws/chat/?token=${token}`;
+    const baseUrl = (process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000").replace(/\/$/, "");
+    const wsUrl = `${baseUrl}/ws/chat/?token=${encodeURIComponent(token)}`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => setError(null);

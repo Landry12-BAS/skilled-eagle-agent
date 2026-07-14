@@ -25,4 +25,4 @@ EXPOSE 8000
 
 # Start server script
 # Using Daphne for ASGI support (WebSockets)
-CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p 8000 config.asgi:application"]
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p 8000 config.asgi:application"]
