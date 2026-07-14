@@ -29,7 +29,7 @@ export async function getHealthStatus(): Promise<HealthResponse | null> {
 }
 
 export async function login(email: string, password: string): Promise<TokenResponseSerializer> {
-  const response = await fetch(`${BACKEND_API_URL}/accounts/login/`, {
+  const response = await fetch(`${BACKEND_API_URL}/auth/login/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -43,7 +43,7 @@ export async function login(email: string, password: string): Promise<TokenRespo
 }
 
 export async function register(data: Record<string, string>): Promise<UserSerializer> {
-  const response = await fetch(`${BACKEND_API_URL}/accounts/register/`, {
+  const response = await fetch(`${BACKEND_API_URL}/auth/register/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -57,7 +57,7 @@ export async function register(data: Record<string, string>): Promise<UserSerial
 }
 
 export async function getCurrentUser(token: string): Promise<UserSerializer> {
-  const response = await fetch(`${BACKEND_API_URL}/accounts/me/`, {
+  const response = await fetch(`${BACKEND_API_URL}/auth/me/`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
