@@ -39,12 +39,6 @@ primary_region = "iad"
   method = "get"
   path = "/api/health/"
 
-[checks]
-  [checks.release]
-    type = "exec"
-    command = ["python", "manage.py", "migrate"]
-    timeout = "10s"
-
 [[statics]]
   guest_path = "/app/static"
   url_prefix = "/static/"
