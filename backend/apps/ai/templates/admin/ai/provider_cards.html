@@ -1,0 +1,1007 @@
+{% extends "admin/base_site.html" %}
+{% load i18n unfold %}
+
+{% block extrastyle %}
+<style>
+:root {
+  /* Light mode colors */
+  --surface-0: transparent;
+  --surface-1: #ffffff;
+  --surface-2: #f8fafc;
+  --border-light: rgba(0, 0, 0, 0.1);
+  --border-focus: rgba(99, 102, 241, 0.5);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --accent-indigo: #4f46e5;
+  --accent-emerald: #059669;
+  --accent-rose: #e11d48;
+  --title-gradient: linear-gradient(to right, #0f172a, #475569);
+  --card-shadow: 0 4px 20px -4px rgba(0,0,0,0.05);
+  --card-hover-shadow: 0 12px 30px -8px rgba(99, 102, 241, 0.15);
+  --header-bg: linear-gradient(180deg, rgba(0,0,0,0.02) 0%, transparent 100%);
+  --input-bg: rgba(0,0,0,0.02);
+  --input-border: rgba(0,0,0,0.1);
+}
+
+html.dark {
+  /* Dark mode colors */
+  --surface-0: transparent;
+  --surface-1: #161925;
+  --surface-2: #1e2233;
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(99, 102, 241, 0.5);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent-indigo: #6366f1;
+  --accent-emerald: #10b981;
+  --accent-rose: #f43f5e;
+  --title-gradient: linear-gradient(to right, #fff, #94a3b8);
+  --card-shadow: 0 4px 20px -4px rgba(0,0,0,0.3);
+  --card-hover-shadow: 0 12px 30px -8px rgba(99, 102, 241, 0.2);
+  --header-bg: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+  --input-bg: rgba(0,0,0,0.15);
+  --input-border: rgba(255,255,255,0.08);
+}
+
+.provider-dashboard {
+  padding: 32px 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.provider-header {
+  margin-bottom: 32px;
+}
+
+.provider-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: var(--title-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+
+.provider-header p {
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 24px;
+}
+
+/* ── Card Container ── */
+.provider-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--card-shadow);
+}
+
+.provider-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-focus);
+  box-shadow: var(--card-hover-shadow);
+}
+
+/* ── Card Header ── */
+.card-header {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--header-bg);
+}
+
+.card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.provider-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.05);
+}
+
+.provider-logo span.material-symbols-outlined {
+  font-size: 26px;
+}
+
+.provider-logo.openai { color: #10b981; }
+.provider-logo.anthropic { color: #f59e0b; }
+.provider-logo.openrouter { color: #a855f7; }
+.provider-logo.nvidia { color: #84cc16; }
+
+.provider-name {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--text-main);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.provider-status {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.status-dot.active { background: var(--accent-emerald); box-shadow: 0 0 10px var(--accent-emerald); }
+
+.card-actions .icon-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.card-actions .icon-btn:hover {
+  background: var(--accent-indigo);
+  color: #fff;
+  border-color: var(--accent-indigo);
+}
+
+/* ── API Key Section ── */
+.api-section {
+  padding: 20px 24px;
+  background: var(--input-bg);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.api-key-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.api-key-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.api-key-display {
+  flex: 1;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 14px;
+  color: var(--text-muted);
+  background: var(--surface-0);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--border-light);
+  letter-spacing: 2px;
+}
+
+.api-key-display.empty {
+  color: var(--accent-rose);
+  border-style: solid;
+  border-color: rgba(244, 63, 94, 0.3);
+  background: rgba(244, 63, 94, 0.05);
+  letter-spacing: normal;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.api-key-input {
+  flex: 1;
+  background: var(--surface-1);
+  border: 1px solid var(--accent-indigo);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  display: none;
+}
+
+.api-key-input:focus { outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+
+.save-key-btn {
+  display: none;
+  background: var(--accent-indigo);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.save-key-btn:hover { background: #4f46e5; }
+
+/* ── Models Section ── */
+.models-container {
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.models-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.models-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.model-count-badge {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  border: 1px solid var(--border-light);
+}
+
+.add-model-btn {
+  background: transparent;
+  color: var(--accent-indigo);
+  border: 1px dashed var(--accent-indigo);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.add-model-btn:hover {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.add-model-btn .material-symbols-outlined { font-size: 18px; }
+
+/* ── Model List ── */
+.model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.model-item {
+  background: var(--surface-1);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s;
+  group: row;
+}
+
+.model-item:hover {
+  border-color: rgba(255,255,255,0.2);
+  background: var(--surface-2);
+}
+
+.model-item.active {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.model-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.model-icon {
+  color: var(--text-muted);
+  font-size: 18px;
+}
+
+.model-item.active .model-icon { color: var(--accent-emerald); }
+
+.model-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+.model-item.active .model-name {
+  color: var(--accent-emerald);
+  font-weight: 600;
+}
+
+.model-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: all 0.2s;
+}
+
+.model-item:hover .model-actions-group {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.action-btn.use { color: var(--accent-indigo); }
+.action-btn.use:hover { background: rgba(99,102,241,0.1); }
+.action-btn.del { color: var(--accent-rose); }
+.action-btn.del:hover { background: rgba(244,63,94,0.1); }
+.action-btn .material-symbols-outlined { font-size: 16px; }
+
+/* ── Empty State ── */
+.empty-state {
+  text-align: center;
+  padding: 32px 20px;
+  background: var(--input-bg);
+  border: 1px dashed var(--border-light);
+  border-radius: 12px;
+}
+
+.empty-state .material-symbols-outlined {
+  font-size: 32px;
+  color: var(--border-light);
+  margin-bottom: 12px;
+}
+
+.empty-state h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.empty-state p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ── Picker Dropdown ── */
+.picker-container { position: relative; }
+
+.picker-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 380px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  z-index: 50;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+.picker-dropdown.open { display: flex; animation: slideDown 0.2s ease-out forwards; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.picker-search-box {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--input-bg);
+}
+
+.picker-search-box input {
+  width: 100%;
+  background: var(--surface-1);
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.picker-search-box input:focus {
+  outline: none;
+  border-color: var(--accent-indigo);
+}
+
+.picker-items-list {
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.picker-item-row {
+  padding: 12px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.15s;
+}
+
+.picker-item-row:hover { background: var(--surface-2); }
+
+.picker-item-row .material-symbols-outlined {
+  font-size: 20px;
+  color: var(--text-muted);
+}
+
+.picker-item-details { display: flex; flex-direction: column; gap: 2px; }
+.picker-item-name { font-size: 14px; font-weight: 600; color: var(--text-main); }
+.picker-item-id { font-size: 12px; color: var(--text-muted); font-family: monospace; }
+
+.picker-loading {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.picker-loading .material-symbols-outlined { animation: spin 2s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Toast */
+.premium-toast {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-light);
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 9999;
+}
+.premium-toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── Custom Modal ── */
+.custom-modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.custom-modal-backdrop.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.custom-modal {
+  background: var(--surface-1);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  padding: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.custom-modal-backdrop.show .custom-modal {
+  transform: translateY(0) scale(1);
+}
+.modal-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(244, 63, 94, 0.1);
+  color: var(--accent-rose);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+.modal-icon .material-symbols-outlined { font-size: 28px; }
+.modal-content { text-align: center; }
+.modal-content h3 { font-size: 18px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
+.modal-content p { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.modal-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.modal-btn.cancel {
+  background: var(--surface-2);
+  color: var(--text-main);
+  border: 1px solid var(--border-light);
+}
+.modal-btn.cancel:hover { background: var(--border-light); }
+.modal-btn.danger {
+  background: var(--accent-rose);
+  color: #fff;
+}
+.modal-btn.danger:hover { background: #be123c; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="toast" class="premium-toast">
+  <span class="material-symbols-outlined" id="toast-icon">info</span>
+  <span id="toast-msg" style="font-weight: 500; font-size: 14px;"></span>
+</div>
+
+<!-- Custom Confirm Modal -->
+<div class="custom-modal-backdrop" id="deleteConfirmModal">
+  <div class="custom-modal">
+    <div class="modal-icon">
+      <span class="material-symbols-outlined">warning</span>
+    </div>
+    <div class="modal-content">
+      <h3>Remove Endpoint</h3>
+      <p>Are you sure you want to remove this model routing? This action cannot be undone.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn danger" onclick="confirmDelete()">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div class="provider-dashboard">
+  <div class="provider-header">
+    <h1>AI Configuration Engine</h1>
+    <p>Manage API keys and route models across different AI providers.</p>
+  </div>
+
+  <div class="provider-grid">
+    {% for provider in providers %}
+    {% with active=provider.get_active_model %}
+    
+    <div class="provider-card" data-provider-id="{{ provider.pk }}" data-provider-name="{{ provider.provider_name }}">
+      
+      <!-- Card Header -->
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="provider-logo {{ provider.provider_name }}">
+            {% if provider.provider_name == 'nvidia' %}<span class="material-symbols-outlined">developer_board</span>
+            {% elif provider.provider_name == 'openrouter' %}<span class="material-symbols-outlined">router</span>
+            {% elif provider.provider_name == 'openai' %}<span class="material-symbols-outlined">psychology</span>
+            {% elif provider.provider_name == 'anthropic' %}<span class="material-symbols-outlined">memory</span>
+            {% else %}<span class="material-symbols-outlined">settings</span>{% endif %}
+          </div>
+          <div>
+            <span class="provider-name">{{ provider.get_provider_name_display }}</span>
+            <div class="provider-status">
+              <div class="status-dot {% if provider.api_key %}active{% endif %}"></div>
+              {% if provider.api_key %}Connected{% else %}Disconnected{% endif %}
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-actions">
+          <button class="icon-btn" onclick="toggleKeyEdit(this, {{ provider.pk }})" title="Configure API Key">
+            <span class="material-symbols-outlined">key</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- API Key Section -->
+      <div class="api-section">
+        <div class="api-key-container">
+          <div class="api-key-label">
+            <span class="material-symbols-outlined" style="font-size: 16px;">lock</span> Token
+          </div>
+          
+          {% if provider.api_key %}
+            <div class="api-key-display" id="key-display-{{ provider.pk }}">
+              {{ provider.api_key|slice:":4" }}••••••••{{ provider.api_key|slice:"-4:" }}
+            </div>
+          {% else %}
+            <div class="api-key-display empty" id="key-display-{{ provider.pk }}">
+              Configuration Required
+            </div>
+          {% endif %}
+          
+          <input class="api-key-input" id="key-input-{{ provider.pk }}" type="password" placeholder="Paste your API token here..." autocomplete="off">
+          <button class="save-key-btn" id="key-save-{{ provider.pk }}" onclick="saveKey({{ provider.pk }})">Authorize</button>
+        </div>
+      </div>
+
+      <!-- Models Section -->
+      <div class="models-container">
+        <div class="models-header-row">
+          <div class="models-title">
+            <span class="material-symbols-outlined" style="font-size: 18px;">view_list</span>
+            Configured Models
+            <span class="model-count-badge">{{ provider.models.count }}</span>
+          </div>
+          
+          <div class="picker-container">
+            <button class="add-model-btn" onclick="togglePicker(this, {{ provider.pk }})">
+              <span class="material-symbols-outlined">add_circle</span> Browse
+            </button>
+            
+            <div class="picker-dropdown" id="picker-{{ provider.pk }}">
+              <div class="picker-search-box">
+                <input type="text" placeholder="Search available models..." oninput="filterPicker(this, {{ provider.pk }})">
+              </div>
+              <div class="picker-items-list" id="picker-list-{{ provider.pk }}">
+                <div class="picker-loading" id="picker-status-{{ provider.pk }}">
+                  <span class="material-symbols-outlined">sync</span>
+                  Fetching registry...
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="model-list" id="model-list-{{ provider.pk }}">
+          {% for model in provider.models.all %}
+          <div class="model-item {% if model.is_active %}active{% endif %}" id="model-row-{{ model.pk }}" data-model-id="{{ model.model_id }}" data-provider-pk="{{ provider.pk }}">
+            <div class="model-info">
+              <span class="material-symbols-outlined model-icon">{% if model.is_active %}check_circle{% else %}radio_button_unchecked{% endif %}</span>
+              <span class="model-name">{{ model.model_id }}</span>
+            </div>
+            
+            <div class="model-actions-group">
+              <button class="action-btn use" onclick="activateModel({{ model.pk }}, {{ provider.pk }})" title="Set Active">
+                <span class="material-symbols-outlined">power_settings_new</span>
+              </button>
+              <button class="action-btn del" onclick="deleteModel({{ model.pk }}, {{ provider.pk }})" title="Delete">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-state" id="no-models-{{ provider.pk }}">
+            <span class="material-symbols-outlined">search_off</span>
+            <h3>No Models Found</h3>
+            <p>Browse the registry to add routing endpoints.</p>
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+const CSRF = "{{ csrf_token }}";
+
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  const icon = document.getElementById('toast-icon');
+  const text = document.getElementById('toast-msg');
+  
+  text.textContent = msg;
+  if (type === 'success') {
+    el.style.borderColor = '#10b981';
+    icon.textContent = 'check_circle';
+    icon.style.color = '#10b981';
+  } else {
+    el.style.borderColor = '#f43f5e';
+    icon.textContent = 'error';
+    icon.style.color = '#f43f5e';
+  }
+  
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function toggleKeyEdit(btn, pk) {
+  const display = document.getElementById('key-display-' + pk);
+  const input   = document.getElementById('key-input-'   + pk);
+  const save    = document.getElementById('key-save-'    + pk);
+  const editing = input.style.display === 'block';
+  
+  display.style.display = editing ? 'flex' : 'none';
+  input.style.display   = editing ? 'none'  : 'block';
+  save.style.display    = editing ? 'none'  : 'block';
+  if (!editing) input.focus();
+}
+
+function saveKey(pk) {
+  const input = document.getElementById('key-input-' + pk);
+  const newKey = input.value.trim();
+  if (!newKey) return;
+
+  fetch(`/admin/ai/aiprovider/${pk}/update-key/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `api_key=${encodeURIComponent(newKey)}`,
+  })
+  .then(r => r.json())
+  .then(data => {
+    const display = document.getElementById('key-display-' + pk);
+    display.textContent = data.masked;
+    display.classList.remove('empty');
+    
+    // Update connected dot
+    const card = document.querySelector(`[data-provider-id="${pk}"]`);
+    card.querySelector('.status-dot').classList.add('active');
+    card.querySelector('.provider-status').innerHTML = `<div class="status-dot active"></div>Connected`;
+
+    toggleKeyEdit(null, pk);
+    input.value = '';
+    toast('API Token Authorized');
+  })
+  .catch(() => toast('Authorization Failed', 'error'));
+}
+
+let allModels = {};
+
+function togglePicker(btn, pk) {
+  const picker = document.getElementById('picker-' + pk);
+  const isOpen = picker.classList.contains('open');
+
+  document.querySelectorAll('.picker-dropdown.open').forEach(p => p.classList.remove('open'));
+
+  if (!isOpen) {
+    picker.classList.add('open');
+    if (!allModels[pk]) fetchPickerModels(pk);
+  }
+
+  setTimeout(() => {
+    document.addEventListener('click', function closePicker(e) {
+      if (!picker.contains(e.target) && !btn.contains(e.target)) {
+        picker.classList.remove('open');
+        document.removeEventListener('click', closePicker);
+      }
+    });
+  }, 50);
+}
+
+function fetchPickerModels(pk) {
+  const card     = document.querySelector(`[data-provider-id="${pk}"]`);
+  const provider = card ? card.dataset.providerName : '';
+  const list     = document.getElementById('picker-list-'   + pk);
+
+  fetch(`/api/ai/models/?config_id=${pk}&provider=${provider}`, { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(data => {
+      const models = data.models || [];
+      allModels[pk] = models;
+      renderPickerItems(pk, models, '');
+    })
+    .catch(() => {
+      list.innerHTML = `<div class="picker-loading" style="color: #f43f5e"><span class="material-symbols-outlined">error</span>Connection Error</div>`;
+    });
+}
+
+function renderPickerItems(pk, models, filter) {
+  const list = document.getElementById('picker-list-' + pk);
+  const q    = filter.toLowerCase();
+  const filtered = models.filter(m => m.id.toLowerCase().includes(q) || (m.name||'').toLowerCase().includes(q));
+
+  list.innerHTML = '';
+  
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="picker-loading">No models found</div>`;
+    return;
+  }
+
+  filtered.slice(0, 50).forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'picker-item-row';
+    div.onclick = () => addModelFromPicker(pk, m.id);
+    
+    div.innerHTML = `
+      <span class="material-symbols-outlined">psychology</span>
+      <div class="picker-item-details">
+        <span class="picker-item-name">${m.name || m.id.split('/').pop()}</span>
+        <span class="picker-item-id">${m.id}</span>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function filterPicker(input, pk) {
+  if (allModels[pk]) renderPickerItems(pk, allModels[pk], input.value);
+}
+
+function addModelFromPicker(pk, modelId) {
+  fetch(`/admin/ai/aiprovider/${pk}/add-model/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `model_id=${encodeURIComponent(modelId)}&activate=false`,
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (!data.ok) { toast(data.error, 'error'); return; }
+    appendModelRow(pk, data);
+    document.getElementById('picker-' + pk).classList.remove('open');
+    toast(`Endpoint Added: ${modelId}`);
+  })
+  .catch(() => toast('Error adding endpoint', 'error'));
+}
+
+function appendModelRow(pk, data) {
+  const list    = document.getElementById('model-list-' + pk);
+  const noMsg   = document.getElementById('no-models-'  + pk);
+  if (noMsg) noMsg.remove();
+
+  if (document.getElementById('model-row-' + data.model_pk)) return;
+
+  const row = document.createElement('div');
+  row.className = 'model-item';
+  row.id = 'model-row-' + data.model_pk;
+  row.dataset.modelId = data.model_id;
+  row.dataset.providerPk = pk;
+  
+  row.innerHTML = `
+    <div class="model-info">
+      <span class="material-symbols-outlined model-icon">radio_button_unchecked</span>
+      <span class="model-name">${data.model_id}</span>
+    </div>
+    <div class="model-actions-group">
+      <button class="action-btn use" onclick="activateModel(${data.model_pk}, ${pk})" title="Set Active">
+        <span class="material-symbols-outlined">power_settings_new</span>
+      </button>
+      <button class="action-btn del" onclick="deleteModel(${data.model_pk}, ${pk})" title="Delete">
+        <span class="material-symbols-outlined">delete</span>
+      </button>
+    </div>
+  `;
+  list.appendChild(row);
+}
+
+function activateModel(modelPk, providerPk) {
+  fetch(`/admin/ai/aiprovider/${providerPk}/model/${modelPk}/activate/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF },
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (!data.ok) return;
+    
+    // Toggle active visually
+    const row = document.getElementById('model-row-' + modelPk);
+    if (row) {
+      if (data.is_active) {
+        row.classList.add('active');
+        row.querySelector('.model-icon').textContent = 'check_circle';
+        // We can keep the activate button but maybe change its styling, or let the user click it again to deactivate.
+        // It's a toggle button now!
+      } else {
+        row.classList.remove('active');
+        row.querySelector('.model-icon').textContent = 'radio_button_unchecked';
+      }
+    }
+    toast('Routing updated successfully');
+  })
+  .catch(() => toast('Error updating routing', 'error'));
+}
+
+let modelToDelete = null;
+
+function deleteModel(modelPk, providerPk) {
+  modelToDelete = { modelPk, providerPk };
+  const modal = document.getElementById('deleteConfirmModal');
+  modal.classList.add('show');
+}
+
+function closeModal() {
+  const modal = document.getElementById('deleteConfirmModal');
+  modal.classList.remove('show');
+  modelToDelete = null;
+}
+
+function confirmDelete() {
+  if (!modelToDelete) return;
+  const { modelPk, providerPk } = modelToDelete;
+  
+  closeModal();
+
+  fetch(`/admin/ai/aiprovider/${providerPk}/model/${modelPk}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF },
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (!data.ok) return;
+    const row = document.getElementById('model-row-' + modelPk);
+    if (row) row.remove();
+    
+    const list = document.getElementById('model-list-' + providerPk);
+    if (list && !list.querySelector('.model-item')) {
+      list.innerHTML = `
+        <div class="empty-state" id="no-models-${providerPk}">
+          <span class="material-symbols-outlined">search_off</span>
+          <h3>No Models Found</h3>
+          <p>Browse the registry to add routing endpoints.</p>
+        </div>
+      `;
+    }
+    toast('Endpoint removed');
+  })
+  .catch(() => toast('Error removing endpoint', 'error'));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% load i18n static %}
+
+<div class="border-b border-white/20 mb-8 pb-6 text-center">
+    <!-- Logo Container -->
+    <div class="mb-6">
+        <!-- Dark Mode Logo -->
+        <img src="{% static 'img/logo_dark.png' %}" alt="Skilled Eagle" class="hidden dark:block h-28 mx-auto object-contain">
+        <!-- Light Mode Logo -->
+        <img src="{% static 'img/logo_light.png' %}" alt="Skilled Eagle" class="block dark:hidden h-28 mx-auto object-contain">
+    </div>
+
+    <h1 class="font-semibold w-full">
+        <span class="block font-bold tracking-tight text-4xl mb-1" style="color: inherit;">SKILLED EAGLE</span>
+        <span class="block text-sm uppercase tracking-[0.2em] font-medium" style="color: inherit; opacity: 0.8">{% translate 'Secure Access' %}</span>
+    </h1>
+</div>
