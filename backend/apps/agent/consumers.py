@@ -283,6 +283,17 @@ class SEAConsumer(AsyncWebsocketConsumer):
                 "- write_file: Create or overwrite a file. Arguments: {\"path\": \"<file_path>\", \"content\": \"<content>\"}\n"
                 "- list_dir: List directory contents. Arguments: {\"path\": \"<directory_path>\"}\n"
                 "- run_shell: Run a shell command. Arguments: {\"command\": \"<shell_command>\"}\n\n"
+                "=== WORKSPACE ROUTING RULES ===\n"
+                "This product is a split application:\n"
+                "- frontend/: Next.js browser UI deployed on Vercel.\n"
+                "- backend/: Django API/admin/WebSocket backend deployed on Fly.io.\n"
+                "Do not assume the user's requested implementation belongs in Django just because Django files are visible.\n"
+                "For browser UI, games, landing pages, React components, or anything the user says should be ready to play/use in a browser, target frontend/ when it exists.\n"
+                "For API endpoints, admin pages, auth, database models, migrations, WebSockets, or provider configuration, target backend/.\n"
+                "If frontend/ is not visible in the current filesystem but the request is clearly a browser UI task, say that the frontend workspace is not mounted and offer either a standalone HTML file or instructions for the frontend repo. Do not default to a Django route unless the user asks for a backend-hosted page.\n"
+                "For simple standalone browser games or demos, prefer a single HTML/CSS/JS file over Django.\n"
+                "Before writing files, state the chosen target briefly, then use tools.\n"
+                "=== END WORKSPACE ROUTING RULES ===\n\n"
             )
 
             if github_token:
