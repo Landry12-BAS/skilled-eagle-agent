@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skilled Eagle Backend</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #08090b;
+      --panel: rgba(255, 255, 255, 0.08);
+      --line: rgba(255, 255, 255, 0.14);
+      --text: #f7f2e8;
+      --muted: #9aa3b2;
+      --accent: #00e0a4;
+      --accent-2: #7c5cff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(124, 92, 255, 0.36), transparent 34%),
+        radial-gradient(circle at 78% 28%, rgba(0, 224, 164, 0.22), transparent 30%),
+        linear-gradient(135deg, #08090b 0%, #10131a 52%, #050608 100%);
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(circle, black, transparent 72%);
+    }
+
+    main {
+      width: min(920px, calc(100vw - 40px));
+      padding: 42px;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045));
+      box-shadow: 0 30px 120px rgba(0, 0, 0, 0.48);
+      backdrop-filter: blur(22px);
+    }
+
+    .status {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 13px;
+      border: 1px solid rgba(0, 224, 164, 0.35);
+      border-radius: 999px;
+      color: var(--accent);
+      background: rgba(0, 224, 164, 0.08);
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 18px var(--accent);
+    }
+
+    h1 {
+      margin: 28px 0 14px;
+      max-width: 780px;
+      font-size: clamp(42px, 8vw, 86px);
+      line-height: 0.9;
+      letter-spacing: -0.08em;
+    }
+
+    p {
+      max-width: 650px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.7;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 34px;
+    }
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 20px;
+      border-radius: 15px;
+      border: 1px solid var(--line);
+      color: var(--text);
+      text-decoration: none;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    a:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.32);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .primary {
+      border: 0;
+      color: #03110d;
+      background: linear-gradient(135deg, var(--accent), #b6ffdf);
+      box-shadow: 0 14px 40px rgba(0, 224, 164, 0.22);
+      font-weight: 800;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 34px;
+    }
+
+    .card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(0, 0, 0, 0.18);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    @media (max-width: 720px) {
+      main { padding: 28px; }
+      .meta { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="status"><span class="dot"></span> Backend online</div>
+    <h1>Skilled Eagle Control Plane</h1>
+    <p>
+      This Fly.io backend powers the SEA workspace API, admin console, AI provider keys,
+      GitHub OAuth, document storage, and realtime agent WebSockets.
+    </p>
+
+    <div class="actions">
+      <a class="primary" href="/admin/">Open admin console</a>
+      <a href="/api/health/">Check API health</a>
+      <a href="https://skilled-eagle-agent.vercel.app/">Open frontend</a>
+    </div>
+
+    <section class="meta" aria-label="Service links">
+      <div class="card"><strong>Admin</strong> Manage users, AI providers, models, and data.</div>
+      <div class="card"><strong>API</strong> Django REST endpoints served from <code>/api/</code>.</div>
+      <div class="card"><strong>Realtime</strong> Daphne ASGI server for chat and SEA sockets.</div>
+    </section>
+  </main>
+</body>
+</html>
