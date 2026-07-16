@@ -194,11 +194,11 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
             return message;
           }));
         } else if (data.type === "tool_start") {
-          if (data.tool === "write_file") {
+          if (data.tool === "write_file" || data.tool === "github_write_file") {
             (socket as WebSocket & { _pendingWriteArgs?: Record<string, string> })._pendingWriteArgs = data.arguments;
           }
         } else if (data.type === "tool_done") {
-          if (data.tool === "write_file") {
+          if (data.tool === "write_file" || data.tool === "github_write_file") {
             const args = (socket as WebSocket & { _pendingWriteArgs?: Record<string, string> })._pendingWriteArgs || {};
             const path: string = args.path || args.file_path || "unknown";
             const newContent: string = args.content || "";

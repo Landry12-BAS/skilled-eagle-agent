@@ -180,3 +180,47 @@ def github_read_file(token, repository, path="", ref=None):
         return base64.b64decode(data["content"]).decode("utf-8", errors="replace")
     except requests.RequestException as exc:
         return f"Error reading GitHub file: {exc}"
+
+
+def github_write_file(token, repository, path, content, ref=None, message=None):
+    """Create or update one file in the selected GitHub repository and branch."""
+    headers, err = github_headers(token)
+    if err:
+        return err
+    if not repository:
+        return "Error: repository is required."
+
+    clean_path = str(path or "").strip().strip("/")
+    if not clean_path or any(part in {"", ".", ".."} for part in clean_path.split("/")):
+        return "Error: path must be a safe repository-relative file path."
+    if not isinstance(content, str):
+        return "Error: content must be a string."
+
+    branch = str(ref or "main").strip() or "main"
+    url = f"https://api.github.com/repos/{repository}/contents/{clean_path}"
+    try:
+        current = requests.get(url, headers=headers, params={"ref": branch}, timeout=15)
+        sha = None
+        action = "created"
+        if current.ok:
+            sha = current.json().get("sha")
+            if not sha:
+                return "GitHub returned an invalid existing file response."
+            action = "updated"
+        elif current.status_code != 404:
+            return github_error(current)
+
+        payload = {
+            "message": str(message or f"SEA: {action} {clean_path}")[:200],
+            "content": base64.b64encode(content.encode("utf-8")).decode("ascii"),
+            "branch": branch,
+        }
+        if sha:
+            payload["sha"] = sha
+
+        response = requests.put(url, headers=headers, json=payload, timeout=20)
+        if not response.ok:
+            return github_error(response)
+        return f"Successfully {action} '{clean_path}' on {repository}@{branch}."
+    except requests.RequestException as exc:
+        return f"Error writing GitHub file: {exc}"

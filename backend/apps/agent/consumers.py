@@ -9,9 +9,11 @@ from django.conf import settings
 from apps.ai.models import AIProviderConfig
 from apps.ai.providers.factory import ProviderFactory
 from apps.chat.models import ChatMessage, Conversation
-from .tools import github_list_branches, github_list_repositories, github_read_file, read_file, write_file, list_dir, run_shell
+from .tools import github_list_branches, github_list_repositories, github_read_file, github_write_file, read_file, write_file, list_dir, run_shell
 
 logger = logging.getLogger(__name__)
+
+MAX_TOOL_EXECUTIONS = 8
 
 def parse_action(text):
     """
@@ -280,9 +282,9 @@ class SEAConsumer(AsyncWebsocketConsumer):
                 "Then you can use another tool or respond to the user.\n\n"
                 "LOCAL FILESYSTEM TOOLS:\n"
                 "- read_file: Read file contents. Arguments: {\"path\": \"<file_path>\"}\n"
-                "- write_file: Create or overwrite a file. Arguments: {\"path\": \"<file_path>\", \"content\": \"<content>\"}\n"
+                "- write_file: Create or overwrite a file only when a local workspace is mounted. Arguments: {\"path\": \"<file_path>\", \"content\": \"<content>\"}\n"
                 "- list_dir: List directory contents. Arguments: {\"path\": \"<directory_path>\"}\n"
-                "- run_shell: Run a shell command. Arguments: {\"command\": \"<shell_command>\"}\n\n"
+                "Do not use a local write tool for a deployed frontend when GitHub is connected; use github_write_file so the change is committed and Vercel can deploy it.\n\n"
                 "=== WORKSPACE ROUTING RULES ===\n"
                 "This product is a split application:\n"
                 "- frontend/: Next.js browser UI deployed on Vercel.\n"
@@ -292,7 +294,7 @@ class SEAConsumer(AsyncWebsocketConsumer):
                 "For API endpoints, admin pages, auth, database models, migrations, WebSockets, or provider configuration, target backend/.\n"
                 "If frontend/ is not visible in the current filesystem but the request is clearly a browser UI task, say that the frontend workspace is not mounted and offer either a standalone HTML file or instructions for the frontend repo. Do not default to a Django route unless the user asks for a backend-hosted page.\n"
                 "For simple standalone browser games or demos, prefer a single HTML/CSS/JS file over Django.\n"
-                "Before writing files, state the chosen target briefly, then use tools.\n"
+                "For implementation work, inspect first and then emit only one Action JSON block at a time. Do not show Action JSON, pseudo tool output, or code that has not been written to the user. Do not claim a file was changed until the tool confirms it.\n"
                 "=== END WORKSPACE ROUTING RULES ===\n\n"
             )
 
@@ -305,10 +307,12 @@ class SEAConsumer(AsyncWebsocketConsumer):
                     "- github_list_repositories: List all repositories accessible by the connected GitHub account. Arguments: {} (no arguments needed)\n"
                     "- github_list_branches: List branches of a repository. Arguments: {\"repository\": \"owner/repo\"}\n"
                     "- github_read_file: Read a file or list a directory in a GitHub repo. Arguments: {\"repository\": \"owner/repo\", \"path\": \"<path>\", \"ref\": \"<branch>\"}\n\n"
+                    "- github_write_file: Create or overwrite a file in the selected repository and branch, committing it to GitHub. Arguments: {\"path\": \"<repo-relative file path>\", \"content\": \"<full file content>\", \"message\": \"<commit message>\"}. The selected repository and branch are used automatically.\n\n"
                     "IMPORTANT: GitHub IS connected. Do NOT say GitHub tools are unavailable. "
                     "When the user asks about GitHub repos, use github_list_repositories immediately. "
                     "When asked about branches, use github_list_branches. "
-                    "When asked to read files from GitHub, use github_read_file.\n"
+                    "When asked to read files from GitHub, use github_read_file. "
+                    "When asked to create or change code, inspect the selected repository first and then use github_write_file. GitHub commits trigger the connected Vercel deployment.\n"
                     "=== END TOOLS ===\n\n"
                 )
             else:
@@ -345,6 +349,7 @@ class SEAConsumer(AsyncWebsocketConsumer):
             provider = ProviderFactory.get_provider(config.provider_name, config.model_name, config.api_key)
 
             # 3. Autonomous agent loop
+            tool_executions = 0
             while True:
                 q = asyncio.Queue()
                 loop = asyncio.get_running_loop()
@@ -405,6 +410,20 @@ class SEAConsumer(AsyncWebsocketConsumer):
                 tool, arguments, _, _ = parse_action(assistant_response)
 
                 if tool:
+                    tool_executions += 1
+                    if tool_executions > MAX_TOOL_EXECUTIONS:
+                        response = "SEA stopped before completing this task because it reached the safe tool limit. Please retry with a narrower request."
+                        await self._save_message(conversation, "assistant", response)
+                        await self.channel_layer.group_send(
+                            self.group_name,
+                            {"type": "sea.event", "payload": {"type": "token", "content": response}},
+                        )
+                        await self.channel_layer.group_send(
+                            self.group_name,
+                            {"type": "sea.event", "payload": {"type": "done", "conversation_id": conversation.id}},
+                        )
+                        return
+
                     # Broadcast tool_start
                     await self.channel_layer.group_send(
                         self.group_name,
@@ -458,6 +477,25 @@ class SEAConsumer(AsyncWebsocketConsumer):
                             path = arguments.get("path") or arguments.get("file_path")
                             ref = arguments.get("ref") or arguments.get("branch") or github_branch
                             tool_output = github_read_file(github_token, repository, path, ref)
+                        elif tool == "github_write_file":
+                            if not github_token or not github_repository:
+                                tool_output = "Error: connect GitHub and select a repository before changing deployed code."
+                            else:
+                                requested_repository = arguments.get("repository") or github_repository
+                                if requested_repository != github_repository:
+                                    tool_output = "Error: SEA can only write to the selected GitHub repository."
+                                else:
+                                    path = arguments.get("path") or arguments.get("file_path")
+                                    content = arguments.get("content")
+                                    message = arguments.get("message") or arguments.get("commit_message")
+                                    tool_output = github_write_file(
+                                        github_token,
+                                        github_repository,
+                                        path,
+                                        content,
+                                        github_branch,
+                                        message,
+                                    )
                         else:
                             tool_output = f"Error: Unknown tool '{tool}'."
                     except Exception as err:
