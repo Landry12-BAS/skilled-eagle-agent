@@ -7,7 +7,7 @@ import { ChatSettingsProvider } from "@/features/chat/components/ChatSettingsPro
 import { ChatSettingsPanel } from "@/features/chat/components/ChatSettingsPanel";
 import { SEAInterface } from "@/features/agent/components/SEAInterface";
 import Link from "next/link";
-import { ArrowLeft, Settings2, PanelLeftClose, PanelLeftOpen, MessageSquare, Bot } from "lucide-react";
+import { ArrowLeft, Settings2, PanelLeft, MessageSquare, Bot } from "lucide-react";
 
 type ActiveView = "chat" | "agent";
 
@@ -79,8 +79,10 @@ function ChatPageContent() {
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
               title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+              aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+              aria-pressed={isSidebarOpen}
             >
-              {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+              <PanelLeft className="h-5 w-5" strokeWidth={1.8} />
             </button>
           )}
           {activeView === "chat" && <div className="hidden h-4 w-px bg-border sm:block" />}

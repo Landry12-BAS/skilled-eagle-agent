@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, InputHTMLAttributes } from "react";
-import { Bot, ChevronDown, Clock, Command, FilePlus2, Folder, FolderOpen, GitBranch, GitPullRequest, PanelBottomClose, PanelBottomOpen, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plug, Plus, Search, Settings, SlidersHorizontal, Sparkles, SquarePen } from "lucide-react";
+import { Bot, ChevronDown, Clock, Command, FilePlus2, Folder, FolderOpen, GitBranch, GitPullRequest, PanelBottomClose, PanelBottomOpen, PanelLeft, PanelRightClose, PanelRightOpen, Plug, Plus, Search, Settings, SlidersHorizontal, Sparkles, SquarePen } from "lucide-react";
 import { AgentChat } from "./AgentChat";
 import { CodeEditor } from "./CodeEditor";
 import { AgentTerminal } from "./AgentTerminal";
@@ -295,7 +295,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
       )}
 
       <section className="relative flex min-w-0 flex-1 flex-col bg-background">
-        {!sidebarOpen && <button onClick={() => setSidebarOpen(true)} className="absolute left-3 top-3 z-30 rounded-md border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground" aria-label="Show sidebar"><PanelLeftOpen className="h-4 w-4" /></button>}
+        {!sidebarOpen && <button onClick={() => setSidebarOpen(true)} className="absolute left-3 top-3 z-30 rounded-md border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground" aria-label="Show sidebar"><PanelLeft className="h-5 w-5" strokeWidth={1.8} /></button>}
         {currentView === "projects" ? (
           <ProjectsView projects={projects} onNewProject={() => setNewProjectOpen(true)} onOpenFolder={() => folderInputRef.current?.click()} onOpenProject={(project) => { setProjectName(project.name); setCurrentView("chat"); }} onTogglePin={(id) => saveProjects(projects.map((project) => project.id === id ? { ...project, pinned: !project.pinned } : project))} onRemoveProject={(id) => saveProjects(projects.filter((project) => project.id !== id))} />
         ) : currentView === "scheduled" ? (
@@ -307,7 +307,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
         ) : (
           <>
             <header className="flex h-12 shrink-0 items-center border-b border-border bg-muted/50 px-2 sm:px-3">
-              <button onClick={() => setSidebarOpen((open) => !open)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}>{sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}</button>
+              <button onClick={() => setSidebarOpen((open) => !open)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"} aria-pressed={sidebarOpen}><PanelLeft className="h-5 w-5" strokeWidth={1.8} /></button>
               <div className="ml-2 min-w-0"><h1 className="truncate text-[13px] font-medium">New task</h1><div className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">{projectName || activeGithubConnection ? <><span>{projectName || activeGithubConnection?.repository}</span>{activeGithubConnection && <><span>·</span><GitBranch className="h-3 w-3" /><span>{activeGithubConnection.branch}</span><ChevronDown className="h-3 w-3" /></>}</> : <span>No project</span>}</div></div>
               <div className="relative ml-auto flex shrink-0 items-center gap-1">
                 <button onClick={() => setSummaryOpen((open) => !open)} className={`rounded-md p-1.5 ${summaryOpen ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={summaryOpen ? "Hide summary" : "Show summary"} title={summaryOpen ? "Hide summary" : "Show summary"}><SlidersHorizontal className="h-4 w-4" /></button>
