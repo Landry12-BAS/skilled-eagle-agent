@@ -58,7 +58,7 @@ export function getStoredRefreshToken() {
 export async function ensureValidAccessToken(forceRefresh = false): Promise<string | null> {
   const access = Cookies.get("access_token") || localStorage.getItem("access_token") || "";
   const expiration = access ? decodeTokenExpiration(access) : undefined;
-  const expiresSoon = !expiration || expiration * 1000 - Date.now() < 60_000;
+  const expiresSoon = !expiration || expiration * 1000 - Date.now() < 5 * 60_000;
 
   if (access && !forceRefresh && !expiresSoon) return access;
 
