@@ -71,6 +71,7 @@ const DEFAULT_AGENT_MESSAGE: Message = {
   role: "agent",
   content: "Hi! I'm SEA — your Skilled Eagle coding agent. I can help you understand, debug, and improve your codebase. Select a file or ask me anything!"
 };
+const SEA_TASKS_STORAGE_KEY = "sea-local-tasks";
 
 function languageFor(filename: string) {
   const extension = filename.split(".").pop()?.toLowerCase() || "text";
@@ -99,6 +100,15 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
   const conversationIdRef = useRef<number | null>(null);
   // Track pending file edits during a tool loop
   const pendingFileEditsRef = useRef<FileEdit[]>([]);
+
+  useEffect(() => {
+    const userMessage = messages.find((message) => message.role === "user");
+    if (!userMessage) return;
+    const id = String(conversationIdRef.current || `draft-${userMessage.id}`);
+    const tasks = JSON.parse(localStorage.getItem(SEA_TASKS_STORAGE_KEY) || "{}") as Record<string, { title: string; messages: Message[]; updatedAt: string }>;
+    tasks[id] = { title: userMessage.content.slice(0, 60) || "New task", messages, updatedAt: new Date().toISOString() };
+    localStorage.setItem(SEA_TASKS_STORAGE_KEY, JSON.stringify(tasks));
+  }, [messages]);
 
   useEffect(() => {
     const token = Cookies.get("access_token") || localStorage.getItem("access_token");

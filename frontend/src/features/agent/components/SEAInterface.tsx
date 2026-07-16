@@ -30,6 +30,8 @@ interface Conversation {
 const directoryInputProps = { webkitdirectory: "", directory: "" } as InputHTMLAttributes<HTMLInputElement>;
 const PROJECTS_STORAGE_KEY = "sea-projects";
 const PROJECT_WORKSPACES_STORAGE_KEY = "sea-project-workspaces";
+type DirectoryHandle = { name: string; getDirectoryHandle(name: string, options: { create: boolean }): Promise<DirectoryHandle>; getFileHandle(name: string, options: { create: boolean }): Promise<{ createWritable(): Promise<{ write(content: string): Promise<void>; close(): Promise<void> }> }> };
+type DirectoryPickerWindow = Window & { showDirectoryPicker?: (options: { mode: "readwrite" }) => Promise<DirectoryHandle> };
 const terminalLines = [
   { type: "info" as const, content: "Skilled Eagle workspace ready" },
   { type: "output" as const, content: "Ask SEA to inspect, explain, or modify your project." },
@@ -217,7 +219,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
     event.target.value = "";
   }
 
-  function createProject() {
+  async function createProject() {
     const name = newProjectName.trim() || "Untitled project";
     const files: WorkspaceFile[] = template === "nextjs"
       ? [
@@ -235,6 +237,27 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
       updated: "Just now",
       pinned: false,
     };
+    const picker = window as DirectoryPickerWindow;
+    if (picker.showDirectoryPicker) {
+      try {
+        const parent = await picker.showDirectoryPicker({ mode: "readwrite" });
+        const folder = await parent.getDirectoryHandle(name.replace(/[\\/:*?"<>|]/g, "-") || "untitled-project", { create: true });
+        for (const file of files) {
+          const parts = file.path.split("/");
+          const filename = parts.pop()!;
+          let directory = folder;
+          for (const part of parts) directory = await directory.getDirectoryHandle(part, { create: true });
+          const writable = await (await directory.getFileHandle(filename, { create: true })).createWritable();
+          await writable.write(file.content);
+          await writable.close();
+        }
+        project.source = `Local folder: ${parent.name}`;
+      } catch (error) {
+        if ((error as DOMException).name !== "AbortError") project.source = "Browser workspace backup";
+      }
+    } else {
+      project.source = "Browser workspace backup";
+    }
     setProjectName(name);
     setWorkspaceFiles(files);
     setOpenFiles(files.slice(0, 1));
@@ -388,7 +411,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
       </section>
 
       {newProjectOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-background/60 p-4 backdrop-blur-sm"><form onSubmit={(event) => { event.preventDefault(); createProject(); }} className="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-2xl"><h2 className="font-semibold">Start a project</h2><p className="mt-1 text-xs text-muted-foreground">Create a fresh workspace and begin with SEA.</p><label className="mt-5 block text-xs text-muted-foreground">Project name</label><input autoFocus value={newProjectName} onChange={(event) => setNewProjectName(event.target.value)} placeholder="My project" className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none" /><label className="mt-4 block text-xs text-muted-foreground">Template</label><select value={template} onChange={(event) => setTemplate(event.target.value)} className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm"><option value="blank">Blank</option><option value="nextjs">Next.js</option><option value="python">Python</option></select><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setNewProjectOpen(false)} className="rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent">Cancel</button><button type="submit" className="rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-background">Create project</button></div></form></div>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-background/60 p-4 backdrop-blur-sm"><form onSubmit={(event) => { event.preventDefault(); void createProject(); }} className="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-2xl"><h2 className="font-semibold">Start a project</h2><p className="mt-1 text-xs text-muted-foreground">Choose a local folder after creating it. SEA will save the starter files there and keep a browser backup.</p><label className="mt-5 block text-xs text-muted-foreground">Project name</label><input autoFocus value={newProjectName} onChange={(event) => setNewProjectName(event.target.value)} placeholder="My project" className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none" /><label className="mt-4 block text-xs text-muted-foreground">Template</label><select value={template} onChange={(event) => setTemplate(event.target.value)} className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm"><option value="blank">Blank</option><option value="nextjs">Next.js</option><option value="python">Python</option></select><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setNewProjectOpen(false)} className="rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent">Cancel</button><button type="submit" className="rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-background">Choose folder & create</button></div></form></div>
       )}
     </div>
   );
