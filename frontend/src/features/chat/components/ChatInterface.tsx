@@ -6,6 +6,7 @@ import { Send, Loader2, Bot, User, AlertCircle, LogIn, CheckCircle2, ChevronRigh
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getConversationDetail, uploadDocument, getActiveModels, getCurrentUser } from "@/lib/api-client";
+import { ensureValidAccessToken } from "@/lib/auth-client";
 import { useChatSettings } from "./ChatSettingsProvider";
 import Cookies from "js-cookie";
 import { RichMarkdown } from "@/components/chat/RichMarkdown";
@@ -221,17 +222,21 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
 
   // Initialize WebSocket once
   useEffect(() => {
-    const token = Cookies.get("access_token") || localStorage.getItem("access_token");
-    if (!token) {
-      setError("Not authenticated. Please log in.");
-      return;
-    }
+    let cancelled = false;
+    let reconnectTimer: number | undefined;
 
-    const baseUrl = (process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000").replace(/\/$/, "");
-    const wsUrl = `${baseUrl}/ws/chat/?token=${encodeURIComponent(token)}`;
-    const ws = new WebSocket(wsUrl);
+    const connect = async (forceRefresh = false) => {
+      const token = await ensureValidAccessToken(forceRefresh);
+      if (cancelled) return;
+      if (!token) {
+        setError("Your session has expired. Please sign in again.");
+        return;
+      }
 
-    ws.onopen = () => setError(null);
+      const baseUrl = (process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000").replace(/\/$/, "");
+      const ws = new WebSocket(`${baseUrl}/ws/chat/?token=${encodeURIComponent(token)}`);
+
+      ws.onopen = () => setError(null);
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -289,18 +294,28 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
       }
     };
 
-    ws.onerror = () => {
-      setError("WebSocket error. Is the backend running?");
-      setIsTyping(false);
-      setIsStreaming(false);
+      ws.onerror = () => {
+        // The close event supplies the reliable connection state and starts recovery.
+      };
+
+      ws.onclose = (event) => {
+        if (cancelled) return;
+        wsRef.current = null;
+        setIsTyping(false);
+        setIsStreaming(false);
+        setError(event.code === 4001 ? "Refreshing your session…" : "Connection lost. Reconnecting…");
+        reconnectTimer = window.setTimeout(() => { void connect(event.code === 4001); }, 1500);
+      };
+
+      wsRef.current = ws;
     };
 
-    ws.onclose = (event) => {
-      if (event.code === 4001) setError("Unauthorized connection.");
+    void connect();
+    return () => {
+      cancelled = true;
+      if (reconnectTimer) window.clearTimeout(reconnectTimer);
+      wsRef.current?.close();
     };
-
-    wsRef.current = ws;
-    return () => ws.close();
   }, []);
 
   const handleStop = () => {

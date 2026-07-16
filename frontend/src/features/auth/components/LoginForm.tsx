@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
 import { login } from "@/lib/api-client";
+import { persistAuthSession } from "@/lib/auth-client";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -26,9 +27,8 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const { access, refresh } = await login(email, password);
-      localStorage.setItem("access_token", access);
-      localStorage.setItem("refresh_token", refresh);
+      const session = await login(email, password);
+      persistAuthSession(session);
       
       setTimeout(() => {
         router.push("/dashboard");

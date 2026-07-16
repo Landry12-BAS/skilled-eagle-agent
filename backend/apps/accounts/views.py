@@ -4,9 +4,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from .serializers import (
     LoginSerializer, TokenResponseSerializer, UserSerializer,
-    RefreshTokenSerializer, RegisterSerializer
+    RegisterSerializer
 )
 from .models import CustomUser
 
@@ -55,20 +56,9 @@ def token_refresh_view(request):
     """
     Refresh token endpoint. Accept refresh token, return new access token.
     """
-    serializer = RefreshTokenSerializer(data=request.data)
+    serializer = TokenRefreshSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    refresh_token = serializer.validated_data['refresh']
-
-    try:
-        from rest_framework_simplejwt.tokens import RefreshToken
-        refresh = RefreshToken(refresh_token)
-        response_data = {'access': str(refresh.access_token)}
-        return Response(response_data, status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response(
-            {'detail': str(e)},
-            status=status.HTTP_401_UNAUTHORIZED,
-        )
+    return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

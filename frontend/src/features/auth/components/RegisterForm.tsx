@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Mail, Lock, User as UserIcon, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { register, login } from "@/lib/api-client";
+import { persistAuthSession } from "@/lib/auth-client";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -35,9 +36,8 @@ export function RegisterForm() {
       setSuccess(true);
       
       // 2. Automatically log them in
-      const { access, refresh } = await login(email, password);
-      localStorage.setItem("access_token", access);
-      localStorage.setItem("refresh_token", refresh);
+      const session = await login(email, password);
+      persistAuthSession(session);
       
       // 3. Redirect to dashboard
       setTimeout(() => {

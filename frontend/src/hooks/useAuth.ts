@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { UserSerializer } from "@/types/api";
-import { loginUser, registerUser, logoutUser, getCurrentUser } from "@/lib/auth-client";
+import { clearAuthSession, ensureValidAccessToken, getStoredRefreshToken, loginUser, registerUser, logoutUser, persistAuthSession } from "@/lib/auth-client";
 import Cookies from "js-cookie";
 
 export interface AuthState {
@@ -31,35 +31,32 @@ export function useAuth(): UseAuthReturn {
     error: null,
   });
 
-  // Initialize from cookies on mount
   useEffect(() => {
-    const accessToken = Cookies.get("access_token");
-    const refreshToken = Cookies.get("refresh_token");
-    const userStr = Cookies.get("user");
+    let cancelled = false;
 
-    if (accessToken && userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        
-        // Sync localStorage with valid cookies on mount
-        localStorage.setItem("access_token", accessToken);
-        if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
-        localStorage.setItem("user", userStr);
+    const restoreSession = async () => {
+      const accessToken = await ensureValidAccessToken();
+      const refreshToken = getStoredRefreshToken();
+      const userStr = Cookies.get("user") || localStorage.getItem("user");
 
-        setState({
-          isAuthenticated: true,
-          user,
-          accessToken,
-          refreshToken: refreshToken || null,
-          isLoading: false,
-          error: null,
-        });
-      } catch (error) {
-        setState((prev) => ({ ...prev, isLoading: false }));
+      if (!accessToken || !userStr) {
+        if (!cancelled) setState((prev) => ({ ...prev, isLoading: false }));
+        return;
       }
-    } else {
-      setState((prev) => ({ ...prev, isLoading: false }));
-    }
+
+      try {
+        const user = JSON.parse(userStr) as UserSerializer;
+        persistAuthSession({ access: accessToken, refresh: refreshToken, user });
+        if (!cancelled) {
+          setState({ isAuthenticated: true, user, accessToken, refreshToken: refreshToken || null, isLoading: false, error: null });
+        }
+      } catch {
+        if (!cancelled) setState((prev) => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    restoreSession();
+    return () => { cancelled = true; };
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
@@ -67,14 +64,7 @@ export function useAuth(): UseAuthReturn {
     const result = await loginUser(email, password);
 
     if (result) {
-      const isSecure = window.location.protocol === "https:";
-      Cookies.set("access_token", result.access, { secure: isSecure, sameSite: "strict", expires: 1/24 }); // 1 hour
-      Cookies.set("refresh_token", result.refresh, { secure: isSecure, sameSite: "strict", expires: 1 }); // 1 day
-      Cookies.set("user", JSON.stringify(result.user), { secure: isSecure, sameSite: "strict", expires: 1 });
-
-      localStorage.setItem("access_token", result.access);
-      localStorage.setItem("refresh_token", result.refresh);
-      localStorage.setItem("user", JSON.stringify(result.user));
+      persistAuthSession(result);
 
       setState({
         isAuthenticated: true,
@@ -108,14 +98,7 @@ export function useAuth(): UseAuthReturn {
       const result = await registerUser(email, username, password, password2, firstName, lastName);
 
       if (result) {
-        const isSecure = window.location.protocol === "https:";
-        Cookies.set("access_token", result.access, { secure: isSecure, sameSite: "strict", expires: 1/24 });
-        Cookies.set("refresh_token", result.refresh, { secure: isSecure, sameSite: "strict", expires: 1 });
-        Cookies.set("user", JSON.stringify(result.user), { secure: isSecure, sameSite: "strict", expires: 1 });
-
-        localStorage.setItem("access_token", result.access);
-        localStorage.setItem("refresh_token", result.refresh);
-        localStorage.setItem("user", JSON.stringify(result.user));
+        persistAuthSession(result);
 
         setState({
           isAuthenticated: true,
@@ -139,18 +122,12 @@ export function useAuth(): UseAuthReturn {
   );
 
   const logout = useCallback(async (): Promise<void> => {
-    const refreshToken = Cookies.get("refresh_token");
+    const refreshToken = getStoredRefreshToken();
     if (refreshToken) {
       await logoutUser(refreshToken);
     }
 
-    Cookies.remove("access_token");
-    Cookies.remove("refresh_token");
-    Cookies.remove("user");
-
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
+    clearAuthSession();
 
     setState({
       isAuthenticated: false,

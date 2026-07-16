@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 import { useChatSettings } from "@/features/chat/components/ChatSettingsProvider";
 import { loadGitHubAccount, loadGitHubToken } from "./githubConnection";
 import { getActiveModels, getConversationDetail } from "@/lib/api-client";
+import { ensureValidAccessToken } from "@/lib/auth-client";
 import { RichMarkdown } from "@/components/chat/RichMarkdown";
 
 interface FileEdit {
@@ -155,10 +156,11 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
     let reconnectTimeout: number;
     let isCancelled = false;
 
-    const connectWs = () => {
-      const token = Cookies.get("access_token") || localStorage.getItem("access_token");
+    const connectWs = async (forceRefresh = false) => {
+      const token = await ensureValidAccessToken(forceRefresh);
+      if (isCancelled) return;
       if (!token) {
-        setStatus("Sign in required");
+        setStatus("Session expired — sign in again");
         return;
       }
 
@@ -243,20 +245,18 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
         }
       };
 
-      socket.onerror = () => {
-        if (!isCancelled) setStatus("Connection error");
-      };
+      socket.onerror = () => {};
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         if (isCancelled) return;
         setConnected(false);
         setIsStreaming(false);
-        setStatus("Reconnecting...");
-        reconnectTimeout = window.setTimeout(connectWs, 3000);
+        setStatus(event.code === 4001 ? "Refreshing session..." : "Reconnecting...");
+        reconnectTimeout = window.setTimeout(() => { void connectWs(event.code === 4001); }, 1500);
       };
     };
 
-    connectWs();
+    void connectWs();
 
     return () => {
       isCancelled = true;
