@@ -29,6 +29,7 @@ interface Conversation {
 
 const directoryInputProps = { webkitdirectory: "", directory: "" } as InputHTMLAttributes<HTMLInputElement>;
 const PROJECTS_STORAGE_KEY = "sea-projects";
+const PROJECT_WORKSPACES_STORAGE_KEY = "sea-project-workspaces";
 const terminalLines = [
   { type: "info" as const, content: "Skilled Eagle workspace ready" },
   { type: "output" as const, content: "Ask SEA to inspect, explain, or modify your project." },
@@ -138,6 +139,22 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
     localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(next));
   }
 
+  function saveProjectWorkspace(id: string, files: WorkspaceFile[]) {
+    const workspaces = JSON.parse(localStorage.getItem(PROJECT_WORKSPACES_STORAGE_KEY) || "{}") as Record<string, WorkspaceFile[]>;
+    workspaces[id] = files;
+    localStorage.setItem(PROJECT_WORKSPACES_STORAGE_KEY, JSON.stringify(workspaces));
+  }
+
+  function openProject(project: ProjectSummary) {
+    const workspaces = JSON.parse(localStorage.getItem(PROJECT_WORKSPACES_STORAGE_KEY) || "{}") as Record<string, WorkspaceFile[]>;
+    const files = workspaces[project.id] || [];
+    setProjectName(project.name);
+    setWorkspaceFiles(files);
+    setOpenFiles(files.slice(0, 1));
+    setActiveFilePath(files[0]?.path || null);
+    setCurrentView("chat");
+  }
+
   function rememberProject(name: string, source: string, fileCount: number) {
     setProjects((current) => {
       const existing = current.find((project) => project.name === name);
@@ -210,12 +227,24 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
       : template === "python"
         ? [{ path: "main.py", language: "python", content: "def main():\n    print(\"Hello world\")\n\nif __name__ == \"__main__\":\n    main()\n" }]
         : [{ path: "README.md", language: "markdown", content: `# ${name}\n` }];
+    const project: ProjectSummary = {
+      id: crypto.randomUUID(),
+      name,
+      source: template === "nextjs" ? "Next.js" : template === "python" ? "Python" : "Blank",
+      fileCount: files.length,
+      updated: "Just now",
+      pinned: false,
+    };
     setProjectName(name);
     setWorkspaceFiles(files);
-    rememberProject(name, template === "nextjs" ? "Next.js" : template === "python" ? "Python" : "Blank", files.length);
+    setOpenFiles(files.slice(0, 1));
+    setActiveFilePath(files[0]?.path || null);
+    saveProjectWorkspace(project.id, files);
+    saveProjects([project, ...projects.filter((item) => item.name !== name)]);
     setNewProjectOpen(false);
     setNewProjectName("");
-    startNewTask("Help me build this new project.");
+    setInitialPrompt("");
+    setCurrentView("chat");
   }
 
   const navItems: Array<{ view: "scheduled" | "plugins" | "pullRequests"; label: string; icon: typeof Clock }> = [
@@ -297,7 +326,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
       <section className="relative flex min-w-0 flex-1 flex-col bg-background">
         {!sidebarOpen && <button onClick={() => setSidebarOpen(true)} className="absolute left-3 top-3 z-30 rounded-md border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground" aria-label="Show sidebar"><PanelLeft className="h-5 w-5" strokeWidth={1.8} /></button>}
         {currentView === "projects" ? (
-          <ProjectsView projects={projects} onNewProject={() => setNewProjectOpen(true)} onOpenFolder={() => folderInputRef.current?.click()} onOpenProject={(project) => { setProjectName(project.name); setCurrentView("chat"); }} onTogglePin={(id) => saveProjects(projects.map((project) => project.id === id ? { ...project, pinned: !project.pinned } : project))} onRemoveProject={(id) => saveProjects(projects.filter((project) => project.id !== id))} />
+          <ProjectsView projects={projects} onNewProject={() => setNewProjectOpen(true)} onOpenFolder={() => folderInputRef.current?.click()} onOpenProject={openProject} onTogglePin={(id) => saveProjects(projects.map((project) => project.id === id ? { ...project, pinned: !project.pinned } : project))} onRemoveProject={(id) => saveProjects(projects.filter((project) => project.id !== id))} />
         ) : currentView === "scheduled" ? (
           <ScheduledView onRun={startNewTask} />
         ) : currentView === "plugins" ? (
@@ -308,7 +337,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
           <>
             <header className="flex h-12 shrink-0 items-center border-b border-border bg-muted/50 px-2 sm:px-3">
               <button onClick={() => setSidebarOpen((open) => !open)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"} aria-pressed={sidebarOpen}><PanelLeft className="h-5 w-5" strokeWidth={1.8} /></button>
-              <div className="ml-2 min-w-0"><h1 className="truncate text-[13px] font-medium">New task</h1><div className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">{projectName || activeGithubConnection ? <><span>{projectName || activeGithubConnection?.repository}</span>{activeGithubConnection && <><span>·</span><GitBranch className="h-3 w-3" /><span>{activeGithubConnection.branch}</span><ChevronDown className="h-3 w-3" /></>}</> : <span>No project</span>}</div></div>
+              <div className="ml-2 min-w-0"><h1 className="truncate text-[13px] font-medium">{projectName || "New task"}</h1><div className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">{projectName || activeGithubConnection ? <><span>{projectName || activeGithubConnection?.repository}</span>{activeGithubConnection && <><span>·</span><GitBranch className="h-3 w-3" /><span>{activeGithubConnection.branch}</span><ChevronDown className="h-3 w-3" /></>}</> : <span>No project</span>}</div></div>
               <div className="relative ml-auto flex shrink-0 items-center gap-1">
                 <button onClick={() => setSummaryOpen((open) => !open)} className={`rounded-md p-1.5 ${summaryOpen ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={summaryOpen ? "Hide summary" : "Show summary"} title={summaryOpen ? "Hide summary" : "Show summary"}><SlidersHorizontal className="h-4 w-4" /></button>
                 <button onClick={() => setTerminalOpen((open) => !open)} className={`rounded-md p-1.5 ${terminalOpen ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={terminalOpen ? "Hide terminal" : "Show terminal"} title={terminalOpen ? "Hide terminal" : "Show terminal"}>{terminalOpen ? <PanelBottomClose className="h-4 w-4" /> : <PanelBottomOpen className="h-4 w-4" />}</button>
