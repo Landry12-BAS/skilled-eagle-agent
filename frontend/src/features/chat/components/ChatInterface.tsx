@@ -8,10 +8,7 @@ import Link from "next/link";
 import { getConversationDetail, uploadDocument, getActiveModels, getCurrentUser } from "@/lib/api-client";
 import { useChatSettings } from "./ChatSettingsProvider";
 import Cookies from "js-cookie";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { RichMarkdown } from "@/components/chat/RichMarkdown";
 import { useAuth } from "@/hooks/useAuth";
 import { DocumentLibrary } from "./DocumentLibrary";
 import { ScrapeUrlModal } from "./ScrapeUrlModal";
@@ -492,6 +489,22 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
     }
   };
 
+  const handleShareMessage = async (content: string) => {
+    if (!content?.trim()) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({ text: content });
+      } else {
+        await navigator.clipboard.writeText(content);
+        setToastMessage({ text: "Copied to clipboard", type: "success" });
+      }
+    } catch (error) {
+      if ((error as DOMException).name !== "AbortError") {
+        setToastMessage({ text: "Failed to share", type: "error" });
+      }
+    }
+  };
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const useFallbackRef = useRef(false);
@@ -886,59 +899,19 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                     msg.content
                   )
                 ) : (
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    className="space-y-2.5"
-                    components={{
-                      ul: ({ node, ...props }) => <ul className="space-y-1.5 mt-1.5 mb-2.5 list-disc list-inside" {...props} />,
-                      li: ({ node, ...props }) => (
-                        <li className="text-sm leading-relaxed">{props.children}</li>
-                      ),
-                      strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
-                      p: ({ node, ...props }) => <p className="leading-relaxed text-sm mb-1.5" {...props} />,
-                      h1: ({ node, ...props }) => <h1 className="text-lg font-semibold mb-2 mt-3" {...props} />,
-                      h2: ({ node, ...props }) => <h2 className="text-base font-semibold mb-2 mt-3" {...props} />,
-                      h3: ({ node, ...props }) => <h3 className="text-sm font-semibold mb-1.5 mt-2.5" {...props} />,
-                      a: ({ node, ...props }) => <a className="text-primary hover:underline underline-offset-4 decoration-primary/50" {...props} />,
-                      code({ node, inline, className, children, ...props }: any) {
-                        const match = /language-(\w+)/.exec(className || "");
-                        return !inline && match ? (
-                          <div className="my-3 rounded-lg overflow-hidden border border-border bg-card/20">
-                            <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b border-border">
-                              <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{match[1]}</span>
-                            </div>
-                            <SyntaxHighlighter
-                              style={vscDarkPlus}
-                              language={match[1]}
-                              PreTag="div"
-                              className="!m-0 !bg-[#1e1e1e] !p-3 !text-[12px]"
-                              {...props}
-                            >
-                              {String(children).replace(/\n$/, "")}
-                            </SyntaxHighlighter>
-                          </div>
-                        ) : (
-                          <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-md text-xs font-mono" {...props}>
-                            {children}
-                          </code>
-                        );
-                      }
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
+                  <RichMarkdown content={msg.content} />
                 )}
                   </div>
                   
                   {/* Actions overlay */}
                   {!isTyping && (
-                    <div className={`mt-2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1 ${msg.role === "assistant" ? "justify-start" : "justify-end"}`}>
+                    <div className={`mt-2 flex items-center gap-1 opacity-75 transition-opacity hover:opacity-100 ${msg.role === "assistant" ? "justify-start" : "justify-end"}`}>
                       {msg.role === "assistant" ? (
                         <>
                           <button
                             type="button"
                             onClick={() => handleCopyMessage(msg.content)}
-                            className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-white/5"
+                            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
                             title="Copy message"
                           >
                             <Copy className="w-4 h-4" />
@@ -947,7 +920,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                             <button 
                               type="button" 
                               onClick={handleRegenerate} 
-                              className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-white/5"
+                              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
                               title="Regenerate response"
                             >
                               <RefreshCw className="w-4 h-4" />
@@ -956,7 +929,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                           <button
                             type="button"
                             onClick={() => setFeedbackState(prev => ({ ...prev, [idx]: prev[idx] === 'up' ? null : 'up' }))}
-                            className={`p-1.5 rounded transition-colors hover:bg-white/5 ${feedbackState[idx] === 'up' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`rounded-lg p-2 transition-colors hover:bg-white/5 ${feedbackState[idx] === 'up' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                             title="Good response"
                           >
                             <ThumbsUp className="w-4 h-4" />
@@ -964,14 +937,15 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                           <button
                             type="button"
                             onClick={() => setFeedbackState(prev => ({ ...prev, [idx]: prev[idx] === 'down' ? null : 'down' }))}
-                            className={`p-1.5 rounded transition-colors hover:bg-white/5 ${feedbackState[idx] === 'down' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`rounded-lg p-2 transition-colors hover:bg-white/5 ${feedbackState[idx] === 'down' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                             title="Bad response"
                           >
                             <ThumbsDown className="w-4 h-4" />
                           </button>
                           <button
                             type="button"
-                            className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-white/5"
+                            onClick={() => handleShareMessage(msg.content)}
+                            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
                             title="Share"
                           >
                             <Share className="w-4 h-4" />
@@ -983,13 +957,13 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                             <button
                               type="button"
                               onClick={() => handleCopyMessage(msg.content)}
-                              className="text-[11px] flex items-center gap-1.5 px-2 py-1 rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-white/5"
+                              className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
                             >
                               <Copy className="w-3 h-3" /> Copy
                             </button>
                           )}
                           {!msg.documentName && (
-                            <button type="button" onClick={() => handleEdit(msg, idx)} className="text-[11px] flex items-center gap-1.5 px-2 py-1 rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-white/5">
+                            <button type="button" onClick={() => handleEdit(msg, idx)} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground">
                               <Pencil className="w-3 h-3" /> Edit
                             </button>
                           )}
@@ -1023,47 +997,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
               </div>
               <div className="flex flex-col w-full min-w-0 text-foreground pt-0.5">
               {streamingContent ? (
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  className="space-y-2.5"
-                  components={{
-                    ul: ({ node, ...props }) => <ul className="space-y-1.5 mt-1.5 mb-2.5 list-disc list-inside" {...props} />,
-                    li: ({ node, ...props }) => (
-                      <li className="text-sm leading-relaxed">{props.children}</li>
-                    ),
-                    strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
-                    p: ({ node, ...props }) => <p className="leading-relaxed text-sm mb-1.5" {...props} />,
-                    h1: ({ node, ...props }) => <h1 className="text-lg font-semibold mb-2 mt-3" {...props} />,
-                    h2: ({ node, ...props }) => <h2 className="text-base font-semibold mb-2 mt-3" {...props} />,
-                    h3: ({ node, ...props }) => <h3 className="text-sm font-semibold mb-1.5 mt-2.5" {...props} />,
-                    a: ({ node, ...props }) => <a className="text-primary hover:underline underline-offset-4 decoration-primary/50" {...props} />,
-                    code({ node, inline, className, children, ...props }: any) {
-                      const match = /language-(\w+)/.exec(className || "");
-                      return !inline && match ? (
-                        <div className="my-3 rounded-lg overflow-hidden border border-border bg-card/20">
-                          <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b border-border">
-                            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{match[1]}</span>
-                          </div>
-                          <SyntaxHighlighter
-                            style={vscDarkPlus}
-                            language={match[1]}
-                            PreTag="div"
-                            className="!m-0 !bg-[#1e1e1e] !p-3 !text-[12px]"
-                            {...props}
-                          >
-                            {String(children).replace(/\n$/, "")}
-                          </SyntaxHighlighter>
-                        </div>
-                      ) : (
-                        <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-md text-xs font-mono" {...props}>
-                          {children}
-                        </code>
-                      );
-                    }
-                  }}
-                >
-                  {streamingContent}
-                </ReactMarkdown>
+                <RichMarkdown content={streamingContent} />
               ) : (
                 <div className="flex gap-1 items-center h-6">
                   <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2 }} className="w-2 h-2 rounded-full bg-current" />
@@ -1270,11 +1204,11 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
 
               {/* Model selector */}
               {availableModels.length > 0 && (
-                <div className="relative min-w-0 max-w-full basis-full sm:basis-auto">
+                <div className="relative min-w-0 max-w-[min(13rem,calc(100vw-5rem))] basis-auto">
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setModelOpen(o => !o); setPlusOpen(false); setEffortOpen(false); }}
-                    className="flex w-full min-w-0 items-center gap-1 rounded-full border border-white/10 px-2 py-0.5 text-xs text-muted-foreground transition-all hover:border-white/25 hover:text-foreground sm:max-w-[150px]"
+                    className="flex w-auto max-w-full min-w-0 items-center gap-1 rounded-full border border-white/10 px-2 py-1 text-xs text-muted-foreground transition-all hover:border-white/25 hover:text-foreground sm:max-w-[150px]"
                   >
                     <Bot className="w-3 h-3 shrink-0" />
                     <span className="truncate">{selectedModelId ? availableModels.find(m => m.id === selectedModelId)?.display_name ?? "Model" : "Default"}</span>
@@ -1287,7 +1221,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 6, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute bottom-8 left-0 z-50 max-h-60 w-full overflow-y-auto rounded-xl border border-white/10 bg-card/95 shadow-2xl backdrop-blur-xl sm:w-[min(18rem,calc(100vw-2rem))]"
+                        className="absolute bottom-9 left-0 z-50 max-h-60 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-white/10 bg-card/95 shadow-2xl backdrop-blur-xl"
                       >
                         <button type="button" onClick={() => { setSelectedModelId(null); setModelOpen(false); }}
                           className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm hover:bg-white/10 transition-colors text-left ${!selectedModelId ? "bg-white/5" : ""}`}>

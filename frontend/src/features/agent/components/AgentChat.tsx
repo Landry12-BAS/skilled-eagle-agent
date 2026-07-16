@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 import { useChatSettings } from "@/features/chat/components/ChatSettingsProvider";
 import { loadGitHubAccount, loadGitHubToken } from "./githubConnection";
 import { getActiveModels, getConversationDetail } from "@/lib/api-client";
+import { RichMarkdown } from "@/components/chat/RichMarkdown";
 
 interface FileEdit {
   path: string;
@@ -422,9 +423,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
                   ? "max-w-[88%] bg-primary text-foreground rounded-xl rounded-br-sm px-3.5 py-2 border border-border sm:max-w-[78%]"
                   : "text-foreground/80 pt-0.5"
               }`}>
-                <span className="whitespace-pre-wrap">
-                  {msg.content || (isStreaming ? "Analyzing…" : "")}
-                </span>
+                {msg.content ? <RichMarkdown content={msg.content} /> : (isStreaming ? <span>Analyzing…</span> : null)}
                 
                              {msg.role === "agent" && (
                   <div className="flex flex-wrap items-center gap-2 mt-3 pt-2 border-t border-border opacity-70">
@@ -627,7 +626,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
                   <FileCode2 className="w-3 h-3" /> {workspaceFiles.length} files
                 </span>
               )}
-              <button type="button" onClick={() => setModelOpen((open) => !open)} className="flex min-w-0 max-w-full basis-full items-center gap-1 rounded-md px-1 py-0.5 hover:text-foreground sm:basis-auto">
+              <button type="button" onClick={() => setModelOpen((open) => !open)} className="flex min-w-0 max-w-[min(13rem,calc(100vw-5rem))] basis-auto items-center gap-1 rounded-md px-1 py-1 hover:text-foreground">
                 <span className="min-w-0 flex-1 truncate sm:max-w-32">
                   {selectedModelId ? availableModels.find((model) => model.id === selectedModelId)?.display_name || "Model" : "Default"}
                 </span>
@@ -657,7 +656,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
             </div>
           )}
           {modelOpen && (
-            <div className="absolute bottom-10 left-2 right-2 z-20 max-h-72 overflow-y-auto rounded-lg border border-border bg-muted p-1.5 shadow-2xl sm:left-10 sm:right-auto sm:w-[18rem]">
+            <div className="absolute bottom-10 left-2 z-20 max-h-72 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-lg border border-border bg-muted p-1.5 shadow-2xl sm:left-10">
               <button
                 type="button"
                 onClick={() => { setSelectedModelId(null); setModelOpen(false); }}
