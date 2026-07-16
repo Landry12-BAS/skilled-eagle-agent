@@ -738,7 +738,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
   return (
     <div className="relative z-10 flex h-full min-w-0 flex-1 flex-col overflow-hidden bg-transparent">
       {/* Chat Header */}
-      <div className="p-4 border-b border-white/5 bg-background/20 backdrop-blur-xl flex items-center justify-between shrink-0 shadow-sm">
+      <div className="flex shrink-0 items-center justify-between border-b border-white/5 bg-background/20 p-3.5 shadow-sm backdrop-blur-xl sm:p-4">
         <div>
           <h2 className="font-semibold">{settings.aiName}</h2>
           <div className="flex items-center gap-1.5 mt-0.5">
@@ -800,12 +800,12 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center max-w-3xl mx-auto px-3 w-full -mt-6">
-                <div className="mb-5 w-full space-y-1.5 text-left sm:mb-6">
-                  <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl">
+              <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center px-3 sm:-mt-6">
+                <div className="mb-4 w-full space-y-1.5 text-left sm:mb-6">
+                  <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl">
                     Hi there, <span className={`bg-gradient-to-r ${settings.aiColor} bg-clip-text text-transparent`}>{userName || 'Guest'}</span>
                   </h1>
-                  <h2 className={`text-xl font-semibold tracking-tight bg-gradient-to-r ${settings.aiColor} bg-clip-text text-transparent opacity-70 sm:text-2xl md:text-3xl`}>
+                  <h2 className={`bg-gradient-to-r text-lg font-semibold tracking-tight text-transparent opacity-70 sm:text-2xl md:text-3xl ${settings.aiColor} bg-clip-text`}>
                     What would you like to know?
                   </h2>
                   <p className="text-muted-foreground text-sm pt-2 max-w-xl">
@@ -813,7 +813,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 w-full">
+                <div className="grid w-full grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
                   {[
                     { text: "Write a to-do list for a personal project or task", icon: <User className="w-5 h-5" /> },
                     { text: "Generate an email to reply to a job offer", icon: <Mail className="w-5 h-5" /> },
@@ -824,9 +824,9 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                       key={i}
                       type="button"
                       onClick={() => { setInput(prompt.text); }}
-                      className="flex flex-col justify-between items-start text-left p-3.5 h-28 bg-card/40 hover:bg-card border border-border/60 hover:border-border rounded-xl transition-all duration-200 text-foreground shadow-sm hover:shadow-md group"
+                      className="group flex h-28 flex-col items-start justify-between rounded-xl border border-border/60 bg-card/40 p-3 text-left text-foreground shadow-sm transition-all duration-200 hover:border-border hover:bg-card hover:shadow-md sm:p-3.5"
                     >
-                      <span className="text-xs font-medium line-clamp-3">{prompt.text}</span>
+                      <span className="line-clamp-3 text-xs font-medium leading-5">{prompt.text}</span>
                       <div className="text-muted-foreground group-hover:text-foreground transition-colors mt-auto">
                         <div className="scale-90 origin-left">{prompt.icon}</div>
                       </div>
@@ -1075,7 +1075,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                 onKeyDown={handleKeyDown}
                 placeholder="Ask the AI anything..."
                 rows={1}
-                className="min-w-0 flex-1 bg-transparent border-0 px-2 py-2.5 focus:ring-0 outline-none text-sm text-foreground placeholder:text-muted-foreground resize-none max-h-[200px] overflow-y-auto min-h-[44px] sm:px-3"
+                className="min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2 py-2.5 text-base text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 sm:px-3 sm:text-sm"
               />
               {/* Voice */}
               <button
@@ -1221,7 +1221,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 6, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute bottom-9 left-0 z-50 max-h-60 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-white/10 bg-card/95 shadow-2xl backdrop-blur-xl"
+                        className="absolute bottom-9 left-0 z-50 max-h-[min(18rem,45dvh)] w-[min(17rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-white/10 bg-card/95 shadow-2xl backdrop-blur-xl"
                       >
                         <button type="button" onClick={() => { setSelectedModelId(null); setModelOpen(false); }}
                           className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm hover:bg-white/10 transition-colors text-left ${!selectedModelId ? "bg-white/5" : ""}`}>

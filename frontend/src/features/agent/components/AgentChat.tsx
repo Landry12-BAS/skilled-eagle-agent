@@ -614,7 +614,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
             }}
             placeholder="Ask SEA to explain, edit, or run something…"
             rows={3}
-            className="w-full resize-none bg-transparent text-foreground text-[13px] px-3.5 pt-3 outline-none placeholder:text-muted-foreground"
+            className="w-full resize-none bg-transparent px-3.5 pt-3 text-base text-foreground outline-none placeholder:text-muted-foreground sm:text-[13px]"
           />
           <div className="flex flex-wrap items-center justify-between gap-2 px-2.5 pb-2">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
