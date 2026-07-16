@@ -116,10 +116,10 @@ export function PullRequestsView({ enabled }: { enabled: boolean }) {
 
   return (
     <div className="h-full overflow-y-auto bg-background">
-      <div className="mx-auto max-w-4xl px-8 py-8">
-        <div className="flex items-center justify-between"><div><h1 className="text-2xl font-semibold">Pull requests</h1><p className="mt-1 text-sm text-muted-foreground">Review open pull requests from a GitHub repository.</p></div>{path && <a href={`https://github.com/${path}/pulls`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">Open GitHub <ExternalLink className="h-3.5 w-3.5" /></a>}</div>
+      <div className="mx-auto max-w-4xl px-4 py-5 sm:px-8 sm:py-8">
+        <div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-2xl font-semibold">Pull requests</h1><p className="mt-1 text-sm text-muted-foreground">Review open pull requests from a GitHub repository.</p></div>{path && <a href={`https://github.com/${path}/pulls`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">Open GitHub <ExternalLink className="h-3.5 w-3.5" /></a>}</div>
         {!enabled && <div className="mt-7 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-300">Enable the GitHub plugin to connect a repository.</div>}
-        <div className="mt-4 flex items-center gap-3">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           <button type="button" onClick={() => void startGitHubOAuth()} disabled={!enabled} className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">{githubAccount ? "Reconnect GitHub" : "Sign in with GitHub"}</button>
           {githubAccount && <span className="text-sm text-emerald-500">Connected as @{githubAccount}</span>}
         </div>

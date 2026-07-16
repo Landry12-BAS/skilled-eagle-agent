@@ -723,7 +723,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
   };
 
   return (
-    <div className="flex flex-col flex-1 h-full overflow-hidden bg-transparent relative z-10">
+    <div className="relative z-10 flex h-full min-w-0 flex-1 flex-col overflow-hidden bg-transparent">
       {/* Chat Header */}
       <div className="p-4 border-b border-white/5 bg-background/20 backdrop-blur-xl flex items-center justify-between shrink-0 shadow-sm">
         <div>
@@ -763,7 +763,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
       </div>
 
       {/* Chat History */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="flex-1 overflow-y-auto space-y-3 p-2 sm:p-3">
         {loadingHistory && (
           <div className="flex justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-black/30" />
@@ -771,7 +771,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
         )}
 
         {!loadingHistory && messages.length === 0 && !isStreaming && (
-          <div className="h-full flex flex-col items-center justify-center">
+          <div className="flex h-full flex-col items-center justify-center">
             {error && error.includes("authentic") ? (
               <div className="flex flex-col items-center justify-center text-muted-foreground space-y-4 opacity-50">
                 <div className="flex flex-col items-center gap-4 p-6 bg-muted/30 rounded-2xl border text-center max-w-sm">
@@ -788,11 +788,11 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center max-w-3xl mx-auto px-3 w-full -mt-6">
-                <div className="w-full text-left mb-6 space-y-1.5">
-                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+                <div className="mb-5 w-full space-y-1.5 text-left sm:mb-6">
+                  <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl">
                     Hi there, <span className={`bg-gradient-to-r ${settings.aiColor} bg-clip-text text-transparent`}>{userName || 'Guest'}</span>
                   </h1>
-                  <h2 className={`text-2xl md:text-3xl font-semibold tracking-tight bg-gradient-to-r ${settings.aiColor} bg-clip-text text-transparent opacity-70`}>
+                  <h2 className={`text-xl font-semibold tracking-tight bg-gradient-to-r ${settings.aiColor} bg-clip-text text-transparent opacity-70 sm:text-2xl md:text-3xl`}>
                     What would you like to know?
                   </h2>
                   <p className="text-muted-foreground text-sm pt-2 max-w-xl">
@@ -825,7 +825,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
           </div>
         )}
 
-        <div className="w-full max-w-3xl mx-auto space-y-5 pb-8">
+        <div className="mx-auto w-full max-w-3xl space-y-4 pb-6 sm:space-y-5 sm:pb-8">
           <AnimatePresence initial={false}>
             {messages.map((msg, idx) => (
               <motion.div
@@ -833,14 +833,14 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                 initial={msg.role === "user" ? { opacity: 0, y: 8 } : false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className={`flex gap-4 group items-start ${msg.role === "assistant" ? "flex-row justify-start" : "flex-row justify-end"}`}
+                className={`group flex items-start gap-2 sm:gap-4 ${msg.role === "assistant" ? "flex-row justify-start" : "flex-row justify-end"}`}
               >
                 {msg.role === "assistant" && (
                   <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 text-white mt-0.5 bg-gradient-to-br ${settings.aiColor} shadow-sm`}>
                     <Bot className="w-3.5 h-3.5" />
                   </div>
                 )}
-                <div className={`flex flex-col min-w-0 ${msg.role === "assistant" ? "w-full" : "max-w-[75%]"}`}>
+                <div className={`flex min-w-0 flex-col ${msg.role === "assistant" ? "w-full" : "max-w-[88%] sm:max-w-[75%]"}`}>
                   <div className={`${msg.role === "assistant" ? "text-foreground" : "text-foreground/90 whitespace-pre-wrap bg-white/10 px-5 py-3 rounded-3xl"}`}>
                 {msg.role === "user" ? (
                   editingMessageId === msg.id ? (
@@ -849,7 +849,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                         value={editingMessageText}
                         onChange={(e) => setEditingMessageText(e.target.value)}
                         rows={3}
-                        className="w-full min-w-[240px] bg-white/15 border border-white/30 rounded-lg p-2.5 text-sm text-white placeholder:text-white/70 resize-y focus:outline-none focus:ring-2 focus:ring-white/40"
+                        className="w-full min-w-0 bg-white/15 border border-white/30 rounded-lg p-2.5 text-sm text-white placeholder:text-white/70 resize-y focus:outline-none focus:ring-2 focus:ring-white/40"
                         placeholder="Edit your message..."
                       />
                       <div className="flex items-center gap-2 justify-end">
@@ -1004,7 +1004,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
 
           {/* System Status Indicator (e.g. Searching Web) */}
           {systemStatus && (
-            <div className="flex gap-4 flex-row items-start">
+            <div className="flex flex-row items-start gap-2 sm:gap-4">
               <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 text-white bg-gradient-to-br ${settings.aiColor} shadow-sm mt-0.5`}>
                 <Bot className="w-3.5 h-3.5" />
               </div>
@@ -1017,7 +1017,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
 
           {/* Live streaming bubble — no animation to prevent flicker */}
           {isStreaming && (
-            <div className="flex gap-4 flex-row items-start">
+            <div className="flex flex-row items-start gap-2 sm:gap-4">
               <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 text-white bg-gradient-to-br ${settings.aiColor} shadow-sm mt-0.5`}>
                 <Bot className="w-3.5 h-3.5" />
               </div>
@@ -1079,7 +1079,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 shrink-0 relative flex justify-center bg-gradient-to-t from-background/80 to-transparent pb-6">
+      <div className="relative flex shrink-0 justify-center bg-gradient-to-t from-background/80 to-transparent p-2 pb-3 sm:p-4 sm:pb-6">
         {/* Toast Notification */}
         <AnimatePresence>
           {toastMessage && (
@@ -1133,7 +1133,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
             )}
 
             {/* Main text input row */}
-            <div className="flex items-end px-2 py-2 gap-2">
+            <div className="flex items-end gap-1.5 px-2 py-2 sm:gap-2">
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -1141,7 +1141,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                 onKeyDown={handleKeyDown}
                 placeholder="Ask the AI anything..."
                 rows={1}
-                className="flex-1 bg-transparent border-0 px-3 py-2.5 focus:ring-0 outline-none text-sm text-foreground placeholder:text-muted-foreground resize-none max-h-[200px] overflow-y-auto min-h-[44px]"
+                className="min-w-0 flex-1 bg-transparent border-0 px-2 py-2.5 focus:ring-0 outline-none text-sm text-foreground placeholder:text-muted-foreground resize-none max-h-[200px] overflow-y-auto min-h-[44px] sm:px-3"
               />
               {/* Voice */}
               <button
@@ -1189,7 +1189,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
             </div>
 
             {/* Bottom toolbar row */}
-            <div className="flex items-center gap-2 px-3 pb-2.5 pt-0.5">
+            <div className="flex flex-wrap items-center gap-2 px-3 pb-2.5 pt-0.5">
 
               {/* + button */}
               <div className="relative">
@@ -1209,7 +1209,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 6, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute bottom-8 left-0 z-50 bg-card/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[145px]"
+                      className="absolute bottom-8 left-0 z-50 w-[min(13rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-card/95 shadow-2xl backdrop-blur-xl"
                     >
                       <button type="button" onClick={() => { fileInputRef.current?.click(); setPlusOpen(false); }}
                         className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm hover:bg-white/10 transition-colors text-left">
@@ -1250,7 +1250,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 6, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute bottom-8 left-0 z-50 bg-card/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[165px]"
+                      className="absolute bottom-8 left-0 z-50 w-[min(14rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-card/95 shadow-2xl backdrop-blur-xl"
                     >
                       {(["low", "medium", "high", "max"] as Effort[]).map((e) => (
                         <button key={e} type="button"
@@ -1287,7 +1287,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 6, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute bottom-8 left-0 z-50 bg-card/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[200px] max-h-60 overflow-y-auto"
+                        className="absolute bottom-8 left-0 z-50 max-h-60 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-white/10 bg-card/95 shadow-2xl backdrop-blur-xl"
                       >
                         <button type="button" onClick={() => { setSelectedModelId(null); setModelOpen(false); }}
                           className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm hover:bg-white/10 transition-colors text-left ${!selectedModelId ? "bg-white/5" : ""}`}>

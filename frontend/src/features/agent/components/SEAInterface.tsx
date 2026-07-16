@@ -64,6 +64,20 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
   const folderInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const syncMobileLayout = () => {
+      if (!media.matches) return;
+      setSidebarOpen(false);
+      setInspectorOpen(false);
+      setTerminalOpen(false);
+    };
+
+    syncMobileLayout();
+    media.addEventListener("change", syncMobileLayout);
+    return () => media.removeEventListener("change", syncMobileLayout);
+  }, []);
+
+  useEffect(() => {
     async function fetchConversations() {
       const token = Cookies.get("access_token") || localStorage.getItem("access_token");
       if (!token) {
@@ -221,11 +235,19 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
   }
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-background text-foreground">
+    <div className="relative flex h-full w-full overflow-hidden bg-background text-foreground">
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(event) => void importFiles(event, false)} />
       <input ref={folderInputRef} type="file" multiple className="hidden" {...directoryInputProps} onChange={(event) => void importFiles(event, true)} />
       {sidebarOpen && (
-        <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-card">
+        <button
+          type="button"
+          aria-label="Close SEA navigation"
+          onClick={() => setSidebarOpen(false)}
+          className="absolute inset-0 z-30 bg-background/70 backdrop-blur-sm md:hidden"
+        />
+      )}
+      {sidebarOpen && (
+        <aside className="absolute inset-y-0 left-0 z-40 flex w-72 max-w-[86vw] shrink-0 flex-col border-r border-border bg-card shadow-2xl md:relative md:z-auto md:w-64 md:max-w-none md:shadow-none">
           <div className="flex h-12 items-center gap-2 border-b border-border px-3">
             <div className="grid h-7 w-7 place-items-center rounded-md bg-foreground text-background"><Bot className="h-4 w-4" /></div>
             <span className="text-sm font-semibold">Skilled Eagle</span>
@@ -234,8 +256,8 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
           <div className="flex-1 space-y-2 overflow-y-auto px-2 py-3">
             <button onClick={() => startNewTask()} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${currentView === "chat" ? "bg-accent/50" : "hover:bg-accent"}`}><SquarePen className="h-5 w-5 opacity-70" /><span>New task</span><span className="ml-auto flex items-center gap-0.5 rounded-md border border-border/50 bg-background/50 px-1.5 py-0.5 text-[11px] text-muted-foreground"><Command className="h-3 w-3" />N</span></button>
             <div className="space-y-0.5 pt-2">
-              <div className={`group flex items-center rounded-xl pr-2 ${currentView === "projects" ? "bg-accent/50" : "hover:bg-accent"}`}><button onClick={() => setCurrentView("projects")} className="flex flex-1 items-center gap-3 px-3 py-2.5 text-sm"><Folder className="h-5 w-5 opacity-70" />Projects</button><button onClick={() => setNewProjectOpen(true)} className="rounded-md p-1 hover:bg-background/80" aria-label="New project"><Plus className="h-4 w-4" /></button></div>
-              {navItems.map((item) => { const Icon = item.icon; return <button key={item.view} onClick={() => setCurrentView(item.view)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${currentView === item.view ? "bg-accent/50" : "hover:bg-accent"}`}><Icon className="h-5 w-5 opacity-70" />{item.label}</button>; })}
+              <div className={`group flex items-center rounded-xl pr-2 ${currentView === "projects" ? "bg-accent/50" : "hover:bg-accent"}`}><button onClick={() => { setCurrentView("projects"); if (window.innerWidth < 768) setSidebarOpen(false); }} className="flex flex-1 items-center gap-3 px-3 py-2.5 text-sm"><Folder className="h-5 w-5 opacity-70" />Projects</button><button onClick={() => setNewProjectOpen(true)} className="rounded-md p-1 hover:bg-background/80" aria-label="New project"><Plus className="h-4 w-4" /></button></div>
+              {navItems.map((item) => { const Icon = item.icon; return <button key={item.view} onClick={() => { setCurrentView(item.view); if (window.innerWidth < 768) setSidebarOpen(false); }} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${currentView === item.view ? "bg-accent/50" : "hover:bg-accent"}`}><Icon className="h-5 w-5 opacity-70" />{item.label}</button>; })}
             </div>
             
             <div className="pt-6 pb-2">
@@ -254,6 +276,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
                       onClick={() => {
                         setActiveConversationId(conv.id);
                         setCurrentView("chat");
+                        if (window.innerWidth < 768) setSidebarOpen(false);
                       }}
                       className={`flex w-full flex-col items-start gap-0.5 rounded-xl px-3 py-2 text-left transition-colors ${currentView === "chat" && activeConversationId === conv.id ? "bg-accent/50" : "hover:bg-accent"}`}
                     >
@@ -283,10 +306,10 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
           <PullRequestsView enabled={githubEnabled} />
         ) : (
           <>
-            <header className="flex h-12 shrink-0 items-center border-b border-border bg-muted/50 px-3">
+            <header className="flex h-12 shrink-0 items-center border-b border-border bg-muted/50 px-2 sm:px-3">
               <button onClick={() => setSidebarOpen((open) => !open)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}>{sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}</button>
               <div className="ml-2 min-w-0"><h1 className="truncate text-[13px] font-medium">New task</h1><div className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">{projectName || activeGithubConnection ? <><span>{projectName || activeGithubConnection?.repository}</span>{activeGithubConnection && <><span>·</span><GitBranch className="h-3 w-3" /><span>{activeGithubConnection.branch}</span><ChevronDown className="h-3 w-3" /></>}</> : <span>No project</span>}</div></div>
-              <div className="relative ml-auto flex items-center gap-1">
+              <div className="relative ml-auto flex shrink-0 items-center gap-1">
                 <button onClick={() => setSummaryOpen((open) => !open)} className={`rounded-md p-1.5 ${summaryOpen ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={summaryOpen ? "Hide summary" : "Show summary"} title={summaryOpen ? "Hide summary" : "Show summary"}><SlidersHorizontal className="h-4 w-4" /></button>
                 <button onClick={() => setTerminalOpen((open) => !open)} className={`rounded-md p-1.5 ${terminalOpen ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={terminalOpen ? "Hide terminal" : "Show terminal"} title={terminalOpen ? "Hide terminal" : "Show terminal"}>{terminalOpen ? <PanelBottomClose className="h-4 w-4" /> : <PanelBottomOpen className="h-4 w-4" />}</button>
                 <button onClick={() => setInspectorOpen((open) => !open)} className={`rounded-md p-1.5 ${inspectorOpen ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={inspectorOpen ? "Hide workspace panel" : "Show workspace panel"} title={inspectorOpen ? "Hide workspace panel" : "Show workspace panel"}>{inspectorOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}</button>
@@ -309,7 +332,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
                 </div>
               </div>
             )}
-            <div className="flex min-h-0 flex-1">
+            <div className="flex min-h-0 flex-1 overflow-hidden">
               <div className="flex min-w-0 flex-1 flex-col">
                 <div className="min-h-0 flex-1">
                   <AgentChat key={taskKey} conversationId={activeConversationId} activeFile={openFiles.find((file) => file.path === activeFilePath) || null} workspaceFiles={enabledPlugins.includes("workspace") ? workspaceFiles : []} initialPrompt={initialPrompt} enabledPlugins={activePluginNames} githubContext={activeGithubConnection ? { repository: activeGithubConnection.repository, branch: activeGithubConnection.branch } : null} onConversationCreated={handleConversationCreated} onReviewFile={reviewFile} onOpenFolder={() => folderInputRef.current?.click()} onAddFiles={() => fileInputRef.current?.click()} onNewProject={() => setNewProjectOpen(true)} />

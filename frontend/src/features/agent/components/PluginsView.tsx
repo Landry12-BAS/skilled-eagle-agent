@@ -213,16 +213,16 @@ export function PluginsView({ enabled, onChange }: { enabled: string[]; onChange
 
   return (
     <div className="h-full overflow-y-auto bg-background">
-      <div className="mx-auto max-w-5xl px-8 py-9">
-        <h1 className="text-4xl font-medium tracking-tight">Plugins</h1>
-        <p className="mt-5 text-lg text-muted-foreground">Work with SEA across your favorite tools</p>
+      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-9">
+        <h1 className="text-3xl font-medium tracking-tight sm:text-4xl">Plugins</h1>
+        <p className="mt-3 text-base text-muted-foreground sm:mt-5 sm:text-lg">Work with SEA across your favorite tools</p>
 
         <div className="relative mt-9">
           <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search plugins" className="h-12 w-full rounded-full border border-border bg-card pl-12 pr-4 text-base outline-none focus:border-foreground/40" />
         </div>
 
-        <div className="mt-12 flex items-center justify-between border-b border-border pb-5">
+        <div className="mt-8 flex items-center justify-between border-b border-border pb-5 sm:mt-12">
           <h2 className="text-xl font-semibold">Installed</h2>
           <button type="button" className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Plugin settings"><Settings className="h-5 w-5" /></button>
         </div>
@@ -233,7 +233,7 @@ export function PluginsView({ enabled, onChange }: { enabled: string[]; onChange
           }) : <p className="text-sm text-muted-foreground">No plugins installed.</p>}
         </div>
 
-        <div className="mt-12 flex items-center gap-2">
+        <div className="mt-8 flex items-center gap-2 sm:mt-12">
           <button type="button" onClick={() => setTab("public")} className={`rounded-xl px-4 py-2 text-sm ${tab === "public" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Public</button>
           <button type="button" onClick={() => setTab("personal")} className={`rounded-xl px-4 py-2 text-sm ${tab === "personal" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Personal</button>
         </div>
@@ -242,7 +242,7 @@ export function PluginsView({ enabled, onChange }: { enabled: string[]; onChange
           const items = visiblePlugins.filter((plugin) => plugin.category === category);
           if (!items.length) return null;
           return (
-            <section key={category} className="mt-12">
+            <section key={category} className="mt-8 sm:mt-12">
               <h2 className="border-b border-border pb-5 text-xl font-semibold capitalize">{category}</h2>
               <div className="grid gap-x-14 divide-y divide-border md:grid-cols-2">
                 {items.map((plugin) => (

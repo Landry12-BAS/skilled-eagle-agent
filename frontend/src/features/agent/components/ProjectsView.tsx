@@ -32,9 +32,9 @@ export function ProjectsView({ projects, onNewProject, onOpenFolder, onOpenProje
   }, [projects, query]);
 
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-background text-foreground">
-      <div className="max-w-5xl mx-auto px-8 py-8">
-        <div className="flex items-center justify-between">
+    <div className="h-full flex-1 overflow-y-auto bg-background text-foreground">
+      <div className="mx-auto max-w-5xl px-4 py-5 sm:px-8 sm:py-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
           <div className="relative">
             <button onClick={() => setMenuOpen((open) => !open)} className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-background">
@@ -55,11 +55,11 @@ export function ProjectsView({ projects, onNewProject, onOpenFolder, onOpenProje
         </div>
 
         <div className="mt-6 overflow-hidden rounded-xl border border-border">
-          <div className="grid grid-cols-[2fr_1.2fr_0.8fr_auto] gap-4 border-b border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+          <div className="hidden grid-cols-[2fr_1.2fr_0.8fr_auto] gap-4 border-b border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground sm:grid">
             <span>Name</span><span>Source</span><span className="flex items-center gap-1">Updated <ChevronDown className="h-3 w-3" /></span><span className="w-20" />
           </div>
           {filteredProjects.length ? filteredProjects.map((project) => (
-            <div key={project.id} className="group grid grid-cols-[2fr_1.2fr_0.8fr_auto] items-center gap-4 border-b border-border/60 px-4 py-3 last:border-0 hover:bg-accent/40">
+            <div key={project.id} className="group grid gap-2 border-b border-border/60 px-4 py-3 last:border-0 hover:bg-accent/40 sm:grid-cols-[2fr_1.2fr_0.8fr_auto] sm:items-center sm:gap-4">
               <button onClick={() => onOpenProject(project)} className="flex min-w-0 items-center gap-3 text-left">
                 <Folder className="h-4 w-4 shrink-0 text-blue-400" />
                 <span className="truncate text-sm font-medium">{project.name}</span>
@@ -67,7 +67,7 @@ export function ProjectsView({ projects, onNewProject, onOpenFolder, onOpenProje
               </button>
               <span className="truncate text-xs text-muted-foreground">{project.source} · {project.fileCount} files</span>
               <span className="text-xs text-muted-foreground">{project.updated}</span>
-              <div className="flex w-20 justify-end gap-1 opacity-60 group-hover:opacity-100">
+              <div className="flex justify-end gap-1 opacity-80 group-hover:opacity-100 sm:w-20 sm:opacity-60">
                 <button onClick={() => onTogglePin(project.id)} className="rounded-md p-1.5 hover:bg-accent" aria-label={project.pinned ? "Unpin project" : "Pin project"}><Pin className="h-3.5 w-3.5" /></button>
                 <button onClick={() => onRemoveProject(project.id)} className="rounded-md p-1.5 hover:bg-red-500/10 hover:text-red-400" aria-label="Remove project"><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
