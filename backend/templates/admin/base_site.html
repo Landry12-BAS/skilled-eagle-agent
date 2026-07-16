@@ -1,4 +1,11 @@
 {% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="icon" type="image/png" href="{% static 'core/favicon.png' %}">
+<link rel="apple-touch-icon" href="{% static 'core/favicon.png' %}">
+{% endblock %}
 
 {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
 

@@ -3,9 +3,10 @@ from django.conf import settings
 from django.contrib import admin
 from django.conf.urls.static import static
 from django.urls import path, include
-from apps.core.views import home
+from apps.core.views import favicon, home
 
 urlpatterns = [
+    path('favicon.ico', favicon, name='favicon'),
     path('', home, name='home'),
     path('admin/', admin.site.urls),
     path('api/', include('apps.core.urls')),
