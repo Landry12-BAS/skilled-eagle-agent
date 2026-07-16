@@ -603,7 +603,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
           </button>
         </div>
         
-        <form onSubmit={handleSend} className="relative rounded-xl bg-card border border-border focus-within:border-border shadow-lg">
+        <form onSubmit={handleSend} className="relative min-w-0 rounded-xl bg-card border border-border focus-within:border-border shadow-lg">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -618,7 +618,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
             className="w-full resize-none bg-transparent text-foreground text-[13px] px-3.5 pt-3 outline-none placeholder:text-muted-foreground"
           />
           <div className="flex flex-wrap items-center justify-between gap-2 px-2.5 pb-2">
-            <div className="flex min-w-0 flex-1 items-center gap-2 text-[10px] text-muted-foreground">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
               <button type="button" onClick={() => setContextMenuOpen((open) => !open)} className="p-1 rounded hover:bg-accent" title="Add context" aria-label="Add context">
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -627,11 +627,11 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
                   <FileCode2 className="w-3 h-3" /> {workspaceFiles.length} files
                 </span>
               )}
-              <button type="button" onClick={() => setModelOpen((open) => !open)} className="flex items-center gap-1 hover:text-foreground">
-                <span className="max-w-[7rem] truncate sm:max-w-32">
+              <button type="button" onClick={() => setModelOpen((open) => !open)} className="flex min-w-0 max-w-full basis-full items-center gap-1 rounded-md px-1 py-0.5 hover:text-foreground sm:basis-auto">
+                <span className="min-w-0 flex-1 truncate sm:max-w-32">
                   {selectedModelId ? availableModels.find((model) => model.id === selectedModelId)?.display_name || "Model" : "Default"}
                 </span>
-                <ChevronDown className="w-3 h-3" />
+                <ChevronDown className="h-3 w-3 shrink-0" />
               </button>
             </div>
             <button
@@ -657,7 +657,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
             </div>
           )}
           {modelOpen && (
-            <div className="absolute bottom-10 left-2 z-20 max-h-72 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-lg border border-border bg-muted p-1.5 shadow-2xl sm:left-10">
+            <div className="absolute bottom-10 left-2 right-2 z-20 max-h-72 overflow-y-auto rounded-lg border border-border bg-muted p-1.5 shadow-2xl sm:left-10 sm:right-auto sm:w-[18rem]">
               <button
                 type="button"
                 onClick={() => { setSelectedModelId(null); setModelOpen(false); }}

@@ -1104,7 +1104,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
           <form
             onSubmit={handleSend}
             onClick={() => { setPlusOpen(false); setEffortOpen(false); setModelOpen(false); }}
-            className="w-full bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl overflow-visible"
+            className="min-w-0 w-full bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl overflow-visible"
           >
             {/* Hidden file inputs */}
             <input type="file" ref={fileInputRef} className="hidden" multiple accept=".txt,.md,.pdf,.docx,image/*" onChange={handleFileUpload} />
@@ -1270,11 +1270,11 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
 
               {/* Model selector */}
               {availableModels.length > 0 && (
-                <div className="relative">
+                <div className="relative min-w-0 max-w-full basis-full sm:basis-auto">
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setModelOpen(o => !o); setPlusOpen(false); setEffortOpen(false); }}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-white/10 text-xs text-muted-foreground hover:text-foreground hover:border-white/25 transition-all max-w-[150px]"
+                    className="flex w-full min-w-0 items-center gap-1 rounded-full border border-white/10 px-2 py-0.5 text-xs text-muted-foreground transition-all hover:border-white/25 hover:text-foreground sm:max-w-[150px]"
                   >
                     <Bot className="w-3 h-3 shrink-0" />
                     <span className="truncate">{selectedModelId ? availableModels.find(m => m.id === selectedModelId)?.display_name ?? "Model" : "Default"}</span>
@@ -1287,7 +1287,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 6, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute bottom-8 left-0 z-50 max-h-60 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-white/10 bg-card/95 shadow-2xl backdrop-blur-xl"
+                        className="absolute bottom-8 left-0 z-50 max-h-60 w-full overflow-y-auto rounded-xl border border-white/10 bg-card/95 shadow-2xl backdrop-blur-xl sm:w-[min(18rem,calc(100vw-2rem))]"
                       >
                         <button type="button" onClick={() => { setSelectedModelId(null); setModelOpen(false); }}
                           className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm hover:bg-white/10 transition-colors text-left ${!selectedModelId ? "bg-white/5" : ""}`}>
