@@ -91,6 +91,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
   const [undoneCards, setUndoneCards] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+  const shouldStickToBottomRef = useRef(true);
   const wsRef = useRef<WebSocket | null>(null);
   const { settings } = useChatSettings();
   const streamingMessageIdRef = useRef<string | null>(null);
@@ -108,6 +109,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
 
   useEffect(() => {
     let cancelled = false;
+    shouldStickToBottomRef.current = true;
 
     if (conversationId) {
       async function loadHistory() {
@@ -266,10 +268,17 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
   }, []);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const container = scrollRef.current;
+    if (container && shouldStickToBottomRef.current) {
+      container.scrollTop = container.scrollHeight;
     }
   }, [messages]);
+
+  const handleMessagesScroll = () => {
+    const container = scrollRef.current;
+    if (!container) return;
+    shouldStickToBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < 64;
+  };
 
   const handleSend = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -301,6 +310,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
       ].join("\n") : "",
     ].filter(Boolean).join("\n");
 
+    shouldStickToBottomRef.current = true;
     streamingMessageIdRef.current = agentMessage.id;
     setMessages((previous) => [...previous, userMessage, agentMessage]);
     setInput("");
@@ -345,6 +355,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
       content: message.content,
     }));
 
+    shouldStickToBottomRef.current = true;
     streamingMessageIdRef.current = agentMessage.id;
     setMessages((previous) => [...previous, userMessage, agentMessage]);
     setIsStreaming(true);
@@ -399,7 +410,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar sm:px-6 sm:py-8">
+      <div ref={scrollRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar sm:px-6 sm:py-8">
         <div className="mx-auto max-w-3xl space-y-5 sm:space-y-6">
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-emerald-400" : "bg-amber-400"}`} />

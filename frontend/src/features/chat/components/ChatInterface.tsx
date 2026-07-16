@@ -85,7 +85,8 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
 
 
   const wsRef = useRef<WebSocket | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const historyScrollRef = useRef<HTMLDivElement>(null);
+  const shouldStickToBottomRef = useRef(true);
   const activeConversationIdRef = useRef<number | null>(conversationId);
   const prevConversationIdRef = useRef<number | null>(conversationId);
   const messagesRef = useRef<Message[]>(messages);
@@ -132,8 +133,16 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
 
   const { settings } = useChatSettings();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+  const scrollToBottom = (force = false) => {
+    const container = historyScrollRef.current;
+    if (!container || (!force && !shouldStickToBottomRef.current)) return;
+    container.scrollTop = container.scrollHeight;
+  };
+
+  const handleHistoryScroll = () => {
+    const container = historyScrollRef.current;
+    if (!container) return;
+    shouldStickToBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < 64;
   };
 
   // Auto-clear toast
@@ -166,6 +175,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
   useEffect(() => {
     const prevId = prevConversationIdRef.current;
     prevConversationIdRef.current = conversationId;
+    shouldStickToBottomRef.current = true;
 
     // If we transition from a new/null conversation ID, but we already have messages loaded in memory,
     // we don't clear the messages or refetch. We just update active ID to avoid loading flicker.
@@ -337,6 +347,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
       newMsgs.push({ role: "user", content: input.trim() });
     }
 
+    shouldStickToBottomRef.current = true;
     const newMessages = [...messages, ...newMsgs];
     setMessages(newMessages);
     setInput("");
@@ -393,6 +404,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
         await truncateMessages(assistantMsg.id, token);
         
         // Re-submit everything up to the user message
+        shouldStickToBottomRef.current = true;
         const newMessages = messages.slice(0, lastAssistantMsgIndex);
         setMessages(newMessages);
         
@@ -443,6 +455,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
       const { truncateMessages } = await import("@/lib/api-client");
       await truncateMessages(editingMessageId, token);
 
+      shouldStickToBottomRef.current = true;
       const baseMessages = messages.slice(0, editingMessageIndex);
       const rebuiltMessages: Message[] = [...baseMessages, { role: "user", content: editedText }];
 
@@ -776,7 +789,7 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
       </div>
 
       {/* Chat History */}
-      <div className="flex-1 overflow-y-auto space-y-3 p-2 sm:p-3">
+      <div ref={historyScrollRef} onScroll={handleHistoryScroll} className="flex-1 overflow-y-auto space-y-3 p-2 sm:p-3">
         {loadingHistory && (
           <div className="flex justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-black/30" />
@@ -1010,7 +1023,6 @@ export function ChatInterface({ conversationId, onConversationCreated, focusComp
           )}
         </div>
         
-        <div ref={messagesEndRef} />
       </div>
 
       <div className="relative flex shrink-0 justify-center bg-gradient-to-t from-background/80 to-transparent p-2 pb-3 sm:p-4 sm:pb-6">
