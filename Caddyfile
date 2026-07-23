@@ -1,4 +1,4 @@
-skilledeagle.duckdns.org {
+api.skilledeagle.tech {
     # Serve static files
     handle_path /static/* {
         root * /app/staticfiles
