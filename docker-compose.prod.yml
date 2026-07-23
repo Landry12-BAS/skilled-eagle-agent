@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+      - backend_static:/app/staticfiles
+      - backend_media:/app/media
+    depends_on:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - backend_static:/app/staticfiles
+      - backend_media:/app/media
+    env_file:
+      - .env.prod
+    depends_on:
+      - redis
+
+volumes:
+  caddy_data:
+  caddy_config:
+  backend_static:
+  backend_media:
+  redis_data:

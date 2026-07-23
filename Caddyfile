@@ -1,0 +1,16 @@
+skilledeagle.duckdns.org {
+    # Serve static files
+    handle_path /static/* {
+        root * /app/staticfiles
+        file_server
+    }
+
+    # Serve media files
+    handle_path /media/* {
+        root * /app/media
+        file_server
+    }
+
+    # Proxy everything else to Daphne (Django backend)
+    reverse_proxy backend:8000
+}
