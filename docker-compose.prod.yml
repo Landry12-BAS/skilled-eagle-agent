@@ -13,6 +13,9 @@ services:
       - caddy_config:/config
       - backend_static:/app/staticfiles
       - backend_media:/app/media
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     depends_on:
       - backend
 
@@ -32,6 +35,9 @@ services:
       - backend_media:/app/media
     env_file:
       - .env.prod
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     depends_on:
       - redis
 
