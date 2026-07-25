@@ -389,13 +389,13 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-[#1a1a1a] text-[#e5e5e5] font-sans">
 
       {activeFile && (
-        <div className="h-8 px-3 flex items-center gap-2 border-b border-border bg-muted/50 text-[11px] text-muted-foreground font-mono shrink-0">
-          <FileCode2 className="w-3.5 h-3.5 text-blue-400" />
+        <div className="h-8 px-3 flex items-center gap-2 border-b border-[#2a2a2a] bg-[#161616] text-[11px] text-[#666] font-mono shrink-0">
+          <svg className="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
           <span className="truncate">{activeFile.path}</span>
-          <span className="ml-auto text-muted-foreground">in context</span>
+          <span className="ml-auto">in context</span>
         </div>
       )}
 
@@ -420,10 +420,10 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar sm:px-6 sm:py-8">
-        <div className="mx-auto max-w-3xl space-y-5 sm:space-y-6">
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-emerald-400" : "bg-amber-400"}`} />
+      <div ref={scrollRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto px-4 py-6 custom-scrollbar sm:px-8">
+        <div className="mx-auto max-w-3xl space-y-6">
+          <div className="flex items-center gap-2 text-[10px] text-[#555] font-mono">
+            <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-green-500" : "bg-yellow-500"}`} />
             {status}
           </div>
           <AnimatePresence initial={false}>
@@ -463,41 +463,37 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
               className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}
             >
               {msg.role === "agent" && (
-                <div className={`w-6 h-6 rounded-md text-foreground flex items-center justify-center shrink-0 mt-0.5 bg-gradient-to-br ${settings.aiColor}`}>
+                <div className="h-6 w-6 rounded bg-orange-500/90 text-white flex items-center justify-center shrink-0 mt-0.5">
                   <Bot className="w-3.5 h-3.5" />
                 </div>
               )}
               <div className={`min-w-0 text-[13px] leading-6 flex flex-col ${
                 msg.role === "user"
-                  ? "max-w-[88%] bg-primary text-foreground rounded-xl rounded-br-sm px-3.5 py-2 border border-border sm:max-w-[78%]"
-                  : "text-foreground/80 pt-0.5"
+                  ? "max-w-[88%] bg-[#252525] text-[#e5e5e5] rounded-xl rounded-br-sm px-3.5 py-2.5 border border-[#333] sm:max-w-[78%]"
+                  : "text-[#ccc] pt-0.5"
               }`}>
                 {msg.content ? <RichMarkdown content={msg.content} /> : (isStreaming ? <span>Analyzing…</span> : null)}
                 
-                             {msg.role === "agent" && (
-                  <div className="flex flex-wrap items-center gap-2 mt-3 pt-2 border-t border-border opacity-70">
+                       {msg.role === "agent" && (
+                  <div className="flex flex-wrap items-center gap-2 mt-3 pt-2 border-t border-[#2a2a2a] opacity-60 hover:opacity-100 transition-opacity">
                     <button 
                       onClick={() => setFeedbackState(prev => ({ ...prev, [msg.id]: prev[msg.id] === 'up' ? null : 'up' }))}
-                      className={`p-1.5 rounded-md hover:bg-accent transition-colors ${feedbackState[msg.id] === 'up' ? 'text-green-400 bg-green-400/10' : 'text-foreground/50'}`}
+                      className={`p-1.5 rounded hover:bg-[#252525] transition-colors ${feedbackState[msg.id] === 'up' ? 'text-green-400' : 'text-[#555]'}`}
                       title="Good response"
                     >
                       <ThumbsUp className="w-3.5 h-3.5" />
                     </button>
                     <button 
                       onClick={() => setFeedbackState(prev => ({ ...prev, [msg.id]: prev[msg.id] === 'down' ? null : 'down' }))}
-                      className={`p-1.5 rounded-md hover:bg-accent transition-colors ${feedbackState[msg.id] === 'down' ? 'text-red-400 bg-red-400/10' : 'text-foreground/50'}`}
+                      className={`p-1.5 rounded hover:bg-[#252525] transition-colors ${feedbackState[msg.id] === 'down' ? 'text-red-400' : 'text-[#555]'}`}
                       title="Poor response"
                     >
                       <ThumbsDown className="w-3.5 h-3.5" />
                     </button>
                     <button 
-                      onClick={() => {
-                        navigator.clipboard.writeText(msg.content);
-                        setCopiedId(msg.id);
-                        setTimeout(() => setCopiedId(null), 2000);
-                      }}
-                      className="p-1.5 rounded-md hover:bg-accent transition-colors text-foreground/50"
-                      title="Copy response"
+                      onClick={() => { navigator.clipboard.writeText(msg.content); setCopiedId(msg.id); setTimeout(() => setCopiedId(null), 2000); }}
+                      className="p-1.5 rounded hover:bg-[#252525] transition-colors text-[#555]"
+                      title="Copy"
                     >
                       {copiedId === msg.id ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
@@ -630,27 +626,24 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
       </div>
 
       {/* Input Area */}
-      <div className="shrink-0 px-4 pb-4 pt-2 sm:px-6 sm:pb-6">
+      <div className="shrink-0 border-t border-[#2a2a2a] bg-[#1a1a1a] px-4 pb-4 pt-3 sm:px-8">
         <div className="mx-auto max-w-3xl">
-        <form onSubmit={handleSend} className="relative min-w-0 rounded-2xl bg-card border border-border/50 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] transition-shadow focus-within:border-border focus-within:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)]">
+        <form onSubmit={handleSend} className="relative min-w-0 rounded-xl bg-[#222] border border-[#333] focus-within:border-[#444] shadow-lg transition-colors">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                handleSend();
-              }
+              if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); handleSend(); }
             }}
-            placeholder="Message SEA..."
+            placeholder="Message SEA…"
             rows={input.split("\n").length > 3 ? 5 : Math.max(1, input.split("\n").length)}
-            className="w-full resize-none bg-transparent px-4 py-4 text-base text-foreground outline-none placeholder:text-muted-foreground/70 sm:text-[14px]"
-            style={{ minHeight: "60px", maxHeight: "200px" }}
+            className="w-full resize-none bg-transparent px-4 pt-3 pb-2 text-[13px] text-[#e5e5e5] outline-none placeholder:text-[#444] font-sans"
+            style={{ minHeight: "52px", maxHeight: "180px" }}
           />
-          <div className="flex flex-wrap items-center justify-between gap-2 px-3 pb-3">
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1 text-[11px] font-medium text-muted-foreground">
-              <button type="button" onClick={() => setContextMenuOpen((open) => !open)} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 transition-colors hover:bg-accent hover:text-foreground" title="Add files or project">
-                <Plus className="h-4 w-4" />
+          <div className="flex flex-wrap items-center justify-between gap-2 px-3 pb-2.5">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1 text-[11px] text-[#555]">
+              <button type="button" onClick={() => setContextMenuOpen((open) => !open)} className="flex items-center gap-1.5 rounded px-2 py-1 transition-colors hover:bg-[#2a2a2a] hover:text-[#ccc]" title="Attach">
+                <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Attach</span>
               </button>
               {workspaceFiles.length > 0 && (
@@ -658,24 +651,28 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
                   <FileCode2 className="w-3 h-3" /> {workspaceFiles.length} files
                 </span>
               )}
-              <button type="button" onClick={() => setModelOpen((open) => !open)} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 transition-colors hover:bg-accent hover:text-foreground">
-                <Sparkles className="h-4 w-4" />
-                <span className="min-w-0 max-w-[100px] truncate sm:max-w-[200px]">
+              <button type="button" onClick={() => setModelOpen((open) => !open)} className="flex items-center gap-1.5 rounded px-2 py-1 transition-colors hover:bg-[#2a2a2a] hover:text-[#ccc]">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span className="min-w-0 max-w-[100px] truncate">
                   {selectedModelId ? availableModels.find((model) => model.id === selectedModelId)?.display_name || "Model" : "Default"}
                 </span>
-                <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
+                <ChevronDown className="h-3 w-3 shrink-0 opacity-40" />
               </button>
             </div>
             <button
               type="submit"
               disabled={!input.trim() || !connected || isStreaming}
-              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${input.trim() && connected && !isStreaming ? "bg-foreground text-background hover:bg-foreground/90 shadow-sm" : "bg-muted text-muted-foreground/50"}`}
+              className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${
+                input.trim() && connected && !isStreaming
+                  ? "bg-orange-500 text-white hover:bg-orange-600 shadow-sm"
+                  : "bg-[#2a2a2a] text-[#444]"
+              }`}
             >
-              {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
+              {isStreaming ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             </button>
           </div>
           {contextMenuOpen && (
-            <div className="absolute bottom-full left-2 z-20 mb-2 w-[min(14rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+            <div className="absolute bottom-full left-2 z-20 mb-2 w-[min(14rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-[#333] bg-[#1e1e1e] shadow-2xl">
               <button type="button" onClick={() => { onOpenFolder?.(); setContextMenuOpen(false); }} className="w-full px-2.5 py-2 flex items-center gap-2 rounded-md text-left text-xs text-foreground/70 hover:bg-accent hover:text-foreground">
                 <FolderOpen className="w-4 h-4 text-blue-400" /> Open project folder
               </button>
@@ -689,11 +686,11 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
             </div>
           )}
           {modelOpen && (
-            <div className="absolute bottom-full left-20 z-20 mb-2 max-h-72 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border bg-card shadow-2xl">
+            <div className="absolute bottom-full left-20 z-20 mb-2 max-h-72 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-lg border border-[#333] bg-[#1e1e1e] shadow-2xl">
               <button
                 type="button"
                 onClick={() => { setSelectedModelId(null); setModelOpen(false); }}
-                className={`w-full rounded-md px-2.5 py-2 text-left text-xs hover:bg-accent ${selectedModelId === null ? "bg-accent" : ""}`}
+                className={`w-full rounded px-2.5 py-2 text-left text-xs hover:bg-[#2a2a2a] ${selectedModelId === null ? "bg-[#2a2a2a] text-[#e5e5e5]" : "text-[#888]"}`}
               >
                 <div className="font-medium text-foreground">Default</div>
                 <div className="text-[10px] text-muted-foreground">Active model from admin</div>
@@ -703,7 +700,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
                   key={model.id}
                   type="button"
                   onClick={() => { setSelectedModelId(model.id); setModelOpen(false); }}
-                  className={`w-full rounded-md px-2.5 py-2 text-left text-xs hover:bg-accent ${selectedModelId === model.id ? "bg-accent" : ""}`}
+                  className={`w-full rounded px-2.5 py-2 text-left text-xs hover:bg-[#2a2a2a] ${selectedModelId === model.id ? "bg-[#2a2a2a] text-[#e5e5e5]" : "text-[#888]"}`}
                 >
                   <div className="font-medium text-foreground">{model.display_name || model.model_id}</div>
                   <div className="text-[10px] text-muted-foreground">{model.provider_label}</div>
@@ -715,7 +712,7 @@ export function AgentChat({ conversationId, activeFile, workspaceFiles = [], onO
             </div>
           )}
         </form>
-        <div className="mt-3 flex items-center justify-center text-[11px] text-muted-foreground/60">
+        <div className="mt-2 flex items-center justify-center text-[10px] text-[#444]">
           <span>AI can make mistakes. Review code changes before deploying.</span>
         </div>
         </div>

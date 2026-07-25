@@ -2,10 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, InputHTMLAttributes } from "react";
-import { Bot, ChevronDown, Clock, Command, FilePlus2, Folder, FolderOpen, GitBranch, GitPullRequest, PanelBottomClose, PanelBottomOpen, PanelLeft, PanelRightClose, PanelRightOpen, Plug, Plus, Search, Settings, SlidersHorizontal, Sparkles, SquarePen } from "lucide-react";
+import {
+  Bot, ChevronDown, ChevronRight, Clock, Command, FilePlus2,
+  Folder, FolderOpen, GitBranch, GitPullRequest, Plug, Plus,
+  SquarePen, Wrench, Search, Settings, Sparkles
+} from "lucide-react";
 import { FileExplorer } from "./FileExplorer";
 import { AgentChat } from "./AgentChat";
-import { CodeEditor } from "./CodeEditor";
 import { AgentTerminal } from "./AgentTerminal";
 import { AGENT_PLUGINS, PLUGIN_STORAGE_KEY, PluginsView } from "./PluginsView";
 import { ProjectsView, type ProjectSummary } from "./ProjectsView";
@@ -33,8 +36,9 @@ const PROJECTS_STORAGE_KEY = "sea-projects";
 const PROJECT_WORKSPACES_STORAGE_KEY = "sea-project-workspaces";
 type DirectoryHandle = { name: string; getDirectoryHandle(name: string, options: { create: boolean }): Promise<DirectoryHandle>; getFileHandle(name: string, options: { create: boolean }): Promise<{ createWritable(): Promise<{ write(content: string): Promise<void>; close(): Promise<void> }> }> };
 type DirectoryPickerWindow = Window & { showDirectoryPicker?: (options: { mode: "readwrite" }) => Promise<DirectoryHandle> };
+
 const terminalLines = [
-  { type: "info" as const, content: "Skilled Eagle workspace ready" },
+  { type: "info" as const, content: "Skilled Eagle Agent ready" },
   { type: "output" as const, content: "Ask SEA to inspect, explain, or modify your project." },
 ];
 
@@ -46,8 +50,7 @@ function languageFor(filename: string) {
 export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [terminalOpen, setTerminalOpen] = useState(false);
-  const [inspectorOpen, setInspectorOpen] = useState(false); // Hidden by default (Kimi style)
-  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
   const [currentView, setCurrentView] = useState<WorkspaceView>("chat");
   const [taskKey, setTaskKey] = useState(0);
   const [initialPrompt, setInitialPrompt] = useState("");
@@ -64,6 +67,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [conversationsLoading, setConversationsLoading] = useState(true);
+  const [sidebarSection, setSidebarSection] = useState<"files" | "history">("history");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,10 +76,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
     const syncMobileLayout = () => {
       if (!media.matches) return;
       setSidebarOpen(false);
-      setInspectorOpen(false);
-      setTerminalOpen(false);
     };
-
     syncMobileLayout();
     media.addEventListener("change", syncMobileLayout);
     return () => media.removeEventListener("change", syncMobileLayout);
@@ -84,20 +85,12 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
   useEffect(() => {
     async function fetchConversations() {
       const token = Cookies.get("access_token") || localStorage.getItem("access_token");
-      if (!token) {
-        setConversationsLoading(false);
-        return;
-      }
+      if (!token) { setConversationsLoading(false); return; }
       try {
         const data = await getConversations(token, "", "sea");
         setConversations(Array.isArray(data) ? data : (data.results || []));
-      } catch {
-        // silently fail
-      } finally {
-        setConversationsLoading(false);
-      }
+      } catch { /* silently fail */ } finally { setConversationsLoading(false); }
     }
-    
     fetchConversations();
     window.addEventListener("conversationUpdated", fetchConversations);
     return () => window.removeEventListener("conversationUpdated", fetchConversations);
@@ -113,9 +106,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
   }, []);
 
   useEffect(() => {
-    function handleGitHubConnectionChange() {
-      setGithubConnection(loadGitHubConnection());
-    }
+    function handleGitHubConnectionChange() { setGithubConnection(loadGitHubConnection()); }
     window.addEventListener(GITHUB_CONNECTION_STORAGE_KEY, handleGitHubConnectionChange);
     window.addEventListener("storage", handleGitHubConnectionChange);
     return () => {
@@ -188,9 +179,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
     });
     setOpenFiles((current) => {
       const existing = current.find((item) => item.path === file.path);
-      return existing
-        ? current.map((item) => item.path === file.path ? file : item)
-        : [...current, file];
+      return existing ? current.map((item) => item.path === file.path ? file : item) : [...current, file];
     });
     setActiveFilePath(file.path);
     setInspectorOpen(true);
@@ -216,6 +205,7 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
     const name = folder && imported[0].path.includes("/") ? imported[0].path.split("/")[0] : projectName || "Local files";
     setProjectName(name);
     rememberProject(name, folder ? "Local folder" : "Local files", imported.length);
+    setSidebarSection("files");
     setCurrentView("chat");
     event.target.value = "";
   }
@@ -271,11 +261,6 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
     setCurrentView("chat");
   }
 
-  const navItems: Array<{ view: "scheduled" | "plugins" | "pullRequests"; label: string; icon: typeof Clock }> = [
-    { view: "scheduled", label: "Scheduled", icon: Clock },
-    { view: "plugins", label: "Plugins", icon: Plug },
-    { view: "pullRequests", label: "Pull requests", icon: GitPullRequest },
-  ];
   const activePluginNames = AGENT_PLUGINS.filter((plugin) => enabledPlugins.includes(plugin.id)).map((plugin) => plugin.name);
   const githubEnabled = enabledPlugins.includes("github");
   const activeGithubConnection = githubEnabled ? githubConnection : null;
@@ -288,134 +273,246 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
   }
 
   return (
-    <div className="relative flex h-full w-full overflow-hidden bg-background text-foreground">
+    <div className="relative flex h-full w-full overflow-hidden bg-[#1a1a1a] text-[#e5e5e5] font-mono">
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(event) => void importFiles(event, false)} />
       <input ref={folderInputRef} type="file" multiple className="hidden" {...directoryInputProps} onChange={(event) => void importFiles(event, true)} />
+
+      {/* Mobile overlay */}
       {sidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close SEA navigation"
-          onClick={() => setSidebarOpen(false)}
-          className="absolute inset-0 z-30 bg-background/70 backdrop-blur-sm md:hidden"
-        />
+        <button type="button" aria-label="Close sidebar" onClick={() => setSidebarOpen(false)}
+          className="absolute inset-0 z-30 md:hidden" />
       )}
+
+      {/* LEFT SIDEBAR — Claude Code style */}
       {sidebarOpen && (
-        <aside className="absolute inset-y-0 left-0 z-40 flex w-72 max-w-[86vw] shrink-0 flex-col border-r border-border bg-card shadow-2xl md:relative md:z-auto md:w-64 md:max-w-none md:shadow-none">
-          <div className="flex h-12 items-center gap-2 border-b border-border px-3">
-            <div className="grid h-7 w-7 place-items-center rounded-md bg-foreground text-background"><Bot className="h-4 w-4" /></div>
-            <span className="text-sm font-semibold">Skilled Eagle</span>
-            <button className="ml-auto rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Search tasks"><Search className="h-4 w-4" /></button>
+        <aside className="absolute inset-y-0 left-0 z-40 flex w-60 flex-col border-r border-[#2a2a2a] bg-[#161616] md:relative md:z-auto">
+          {/* Sidebar Header */}
+          <div className="flex h-10 items-center gap-2 border-b border-[#2a2a2a] px-3">
+            <div className="flex h-5 w-5 items-center justify-center rounded bg-orange-500/90 text-white">
+              <Bot className="h-3 w-3" />
+            </div>
+            <span className="text-[12px] font-semibold text-[#e5e5e5] tracking-wide uppercase">SEA</span>
+            <button
+              onClick={() => { setInitialPrompt(""); setTaskKey((k) => k + 1); setCurrentView("chat"); }}
+              className="ml-auto rounded p-1 text-[#666] hover:bg-[#2a2a2a] hover:text-[#e5e5e5] transition-colors"
+              title="New task (⌘N)"
+            >
+              <SquarePen className="h-3.5 w-3.5" />
+            </button>
           </div>
-          <div className="flex-1 space-y-2 overflow-y-auto px-2 py-3">
-            <button onClick={() => startNewTask()} className="mb-4 flex w-full items-center justify-center gap-2 rounded-full bg-foreground px-4 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/90"><Plus className="h-4 w-4" /><span>New Task</span></button>
-            
-            <div className="pt-2 pb-2">
-              <div className="px-3 mb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Recent Tasks
-              </div>
-              <div className="space-y-0.5">
+
+          {/* Section tabs: History | Files */}
+          <div className="flex border-b border-[#2a2a2a]">
+            <button
+              onClick={() => setSidebarSection("history")}
+              className={`flex-1 py-1.5 text-[11px] font-medium transition-colors ${sidebarSection === "history" ? "text-orange-400 border-b border-orange-400" : "text-[#666] hover:text-[#aaa]"}`}
+            >
+              History
+            </button>
+            <button
+              onClick={() => setSidebarSection("files")}
+              className={`flex-1 py-1.5 text-[11px] font-medium transition-colors ${sidebarSection === "files" ? "text-orange-400 border-b border-orange-400" : "text-[#666] hover:text-[#aaa]"}`}
+            >
+              Files {workspaceFiles.length > 0 && <span className="ml-1 text-[10px] text-[#555]">({workspaceFiles.length})</span>}
+            </button>
+          </div>
+
+          {/* Sidebar Content */}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {sidebarSection === "history" ? (
+              <div className="py-1">
                 {conversationsLoading ? (
-                  <div className="px-3 py-2 text-xs text-muted-foreground">Loading...</div>
+                  <div className="px-3 py-3 text-[11px] text-[#555]">Loading…</div>
                 ) : conversations.length === 0 ? (
-                  <div className="px-3 py-2 text-xs text-muted-foreground">No tasks yet</div>
+                  <div className="px-3 py-6 text-center">
+                    <p className="text-[11px] text-[#555]">No tasks yet</p>
+                    <p className="mt-1 text-[10px] text-[#444]">Start a new task below</p>
+                  </div>
                 ) : (
-                  conversations.map(conv => (
+                  conversations.map((conv) => (
                     <button
                       key={conv.id}
-                      onClick={() => {
-                        setActiveConversationId(conv.id);
-                        setCurrentView("chat");
-                        if (window.innerWidth < 768) setSidebarOpen(false);
-                      }}
-                      className={`flex w-full flex-col items-start gap-0.5 rounded-lg px-3 py-2.5 text-left transition-colors ${currentView === "chat" && activeConversationId === conv.id ? "bg-accent/70" : "hover:bg-accent/40"}`}
+                      onClick={() => { setActiveConversationId(conv.id); setCurrentView("chat"); if (window.innerWidth < 768) setSidebarOpen(false); }}
+                      className={`flex w-full items-start gap-2 px-3 py-2 text-left transition-colors ${currentView === "chat" && activeConversationId === conv.id ? "bg-[#2a2a2a] text-[#e5e5e5]" : "text-[#888] hover:bg-[#202020] hover:text-[#ccc]"}`}
                     >
-                      <span className="text-[13px] font-medium line-clamp-1">{conv.title || "New Task"}</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {new Date(conv.updated_at).toLocaleDateString()}
-                      </span>
+                      <ChevronRight className="mt-0.5 h-3 w-3 shrink-0 text-[#555]" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[12px] leading-snug">{conv.title || "New Task"}</p>
+                        <p className="text-[10px] text-[#555] mt-0.5">{new Date(conv.updated_at).toLocaleDateString()}</p>
+                      </div>
                     </button>
                   ))
                 )}
               </div>
-            </div>
-
-            <div className="my-4 border-t border-border/50" />
-            
-            <div className="px-3 mb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Workspace
-            </div>
-            <div className="space-y-0.5 pt-1">
-              <div className={`group flex items-center rounded-lg pr-2 ${currentView === "projects" ? "bg-accent/50" : "hover:bg-accent/40"}`}><button onClick={() => { setCurrentView("projects"); if (window.innerWidth < 768) setSidebarOpen(false); }} className="flex flex-1 items-center gap-3 px-3 py-2 text-[13px]"><Folder className="h-4 w-4 opacity-70" />Projects</button><button onClick={() => setNewProjectOpen(true)} className="rounded-md p-1 hover:bg-background/80" aria-label="New project"><Plus className="h-3 w-3" /></button></div>
-              {navItems.map((item) => { const Icon = item.icon; return <button key={item.view} onClick={() => { setCurrentView(item.view); if (window.innerWidth < 768) setSidebarOpen(false); }} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-colors ${currentView === item.view ? "bg-accent/50" : "hover:bg-accent/40"}`}><Icon className="h-4 w-4 opacity-70" />{item.label}</button>; })}
-            </div>
+            ) : (
+              <div className="flex h-full flex-col">
+                {workspaceFiles.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-3 px-4 py-8">
+                    <FolderOpen className="h-8 w-8 text-[#444]" />
+                    <p className="text-center text-[11px] text-[#555]">No files loaded</p>
+                    <button
+                      onClick={() => folderInputRef.current?.click()}
+                      className="rounded border border-[#333] bg-[#222] px-3 py-1.5 text-[11px] text-[#888] hover:bg-[#2a2a2a] hover:text-[#ccc] transition-colors"
+                    >
+                      Open folder
+                    </button>
+                  </div>
+                ) : (
+                  <FileExplorer files={workspaceFiles} onFileSelect={(path) => { const file = workspaceFiles.find((f) => f.path === path); if (file) reviewFile(file); }} />
+                )}
+              </div>
+            )}
           </div>
-          <div className="border-t border-border p-2"><button onClick={onOpenSettings} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"><Settings className="h-4 w-4" /> Settings</button></div>
+
+          {/* Sidebar Footer */}
+          <div className="border-t border-[#2a2a2a] p-2 space-y-0.5">
+            <button onClick={() => folderInputRef.current?.click()} className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-[11px] text-[#666] hover:bg-[#2a2a2a] hover:text-[#ccc] transition-colors">
+              <FolderOpen className="h-3.5 w-3.5" /> Open Folder
+            </button>
+            <button onClick={() => fileInputRef.current?.click()} className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-[11px] text-[#666] hover:bg-[#2a2a2a] hover:text-[#ccc] transition-colors">
+              <FilePlus2 className="h-3.5 w-3.5" /> Add Files
+            </button>
+            <button onClick={() => { setCurrentView("plugins"); }} className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-[11px] text-[#666] hover:bg-[#2a2a2a] hover:text-[#ccc] transition-colors">
+              <Plug className="h-3.5 w-3.5" /> Plugins
+            </button>
+            <button onClick={onOpenSettings} className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-[11px] text-[#666] hover:bg-[#2a2a2a] hover:text-[#ccc] transition-colors">
+              <Settings className="h-3.5 w-3.5" /> Settings
+            </button>
+          </div>
         </aside>
       )}
 
-      <section className="relative flex min-w-0 flex-1 flex-col bg-background">
-        {!sidebarOpen && <button onClick={() => setSidebarOpen(true)} className="absolute left-3 top-3 z-30 rounded-md border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground" aria-label="Show sidebar"><PanelLeft className="h-5 w-5" strokeWidth={1.8} /></button>}
-        {currentView === "projects" ? (
-          <ProjectsView projects={projects} onNewProject={() => setNewProjectOpen(true)} onOpenFolder={() => folderInputRef.current?.click()} onOpenProject={openProject} onTogglePin={(id) => saveProjects(projects.map((project) => project.id === id ? { ...project, pinned: !project.pinned } : project))} onRemoveProject={(id) => saveProjects(projects.filter((project) => project.id !== id))} />
-        ) : currentView === "scheduled" ? (
-          <ScheduledView onRun={startNewTask} />
-        ) : currentView === "plugins" ? (
-          <PluginsView enabled={enabledPlugins} onChange={setEnabledPlugins} />
-        ) : currentView === "pullRequests" ? (
-          <PullRequestsView enabled={githubEnabled} />
-        ) : (
-          <>
-            <header className="flex h-12 shrink-0 items-center border-b border-border bg-background px-2 sm:px-4">
-              <button onClick={() => setSidebarOpen((open) => !open)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"} aria-pressed={sidebarOpen}><PanelLeft className="h-5 w-5" strokeWidth={1.8} /></button>
-              <div className="ml-3 min-w-0 flex-1"><h1 className="truncate text-sm font-medium">{projectName || "New task"}</h1></div>
-              <div className="relative ml-auto flex shrink-0 items-center gap-1.5">
-                <button onClick={() => setTerminalOpen((open) => !open)} className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${terminalOpen ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={terminalOpen ? "Hide terminal" : "Show terminal"} title={terminalOpen ? "Hide terminal" : "Show terminal"}>{terminalOpen ? <PanelBottomClose className="h-4 w-4" /> : <PanelBottomOpen className="h-4 w-4" />} <span className="hidden sm:inline">Terminal</span></button>
-                <button onClick={() => setInspectorOpen((open) => !open)} className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${inspectorOpen ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={inspectorOpen ? "Hide workspace" : "Show workspace"} title={inspectorOpen ? "Hide workspace" : "Show workspace"}>{inspectorOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />} <span className="hidden sm:inline">Workspace</span></button>
-              </div>
-            </header>
+      {/* MAIN CONTENT */}
+      <section className="relative flex min-w-0 flex-1 flex-col bg-[#1a1a1a]">
 
-            <div className="flex min-h-0 flex-1 overflow-hidden">
-              <div className="flex min-w-0 flex-1 flex-col">
-                <div className="min-h-0 flex-1">
-                  <AgentChat key={taskKey} conversationId={activeConversationId} activeFile={openFiles.find((file) => file.path === activeFilePath) || null} workspaceFiles={enabledPlugins.includes("workspace") ? workspaceFiles : []} initialPrompt={initialPrompt} enabledPlugins={activePluginNames} githubContext={activeGithubConnection ? { repository: activeGithubConnection.repository, branch: activeGithubConnection.branch } : null} onConversationCreated={handleConversationCreated} onReviewFile={reviewFile} onOpenFolder={() => folderInputRef.current?.click()} onAddFiles={() => fileInputRef.current?.click()} onNewProject={() => setNewProjectOpen(true)} />
-                </div>
-                {terminalOpen && <div className="h-52 shrink-0 border-t border-border"><AgentTerminal lines={terminalLines} /></div>}
-              </div>
-              {inspectorOpen && (
-                <aside className="hidden w-[420px] shrink-0 border-l border-border bg-card/70 md:flex md:flex-col">
-                  <div className="border-b border-border px-4 py-3"><h2 className="text-sm font-semibold">Workspace</h2><p className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">{projectName || "No project"}</p></div>
-                  <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
-                    <section className="h-80 min-h-0 overflow-hidden rounded-lg border border-border bg-background">
-                      <CodeEditor openFiles={openFiles} activeFile={activeFilePath} onTabSelect={setActiveFilePath} onTabClose={closeOpenFile} />
-                    </section>
-                    <section>
-                      <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Files</span>
-                        <span>{workspaceFiles.length}</span>
-                      </div>
-                      <div className="h-56 min-h-0 overflow-hidden rounded-lg border border-border bg-background">
-                        <FileExplorer
-                          files={workspaceFiles}
-                          onFileSelect={(path) => {
-                            const file = workspaceFiles.find((f) => f.path === path);
-                            if (file) reviewFile(file);
-                          }}
-                        />
-                      </div>
-                    </section>
-                    <section><div className="mb-2 text-xs text-muted-foreground">Plugins</div><div className="flex flex-wrap gap-1.5">{activePluginNames.length ? activePluginNames.map((name) => <span key={name} className="rounded-md border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground">{name}</span>) : <span className="text-xs text-muted-foreground">None</span>}</div></section>
-                    {activeGithubConnection && <section><div className="mb-2 text-xs text-muted-foreground">GitHub</div><div className="rounded-md border border-border/70 bg-background p-2"><p className="truncate font-mono text-[11px] text-muted-foreground">{activeGithubConnection.repository}</p><select value={activeGithubConnection.branch} onChange={(event) => selectGitHubBranch(event.target.value)} className="mt-2 w-full rounded-md border border-border bg-card px-2 py-1.5 text-[11px] outline-none">{activeGithubConnection.branches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}</select><button type="button" onClick={() => startNewTask(`Pull ${activeGithubConnection.repository} branch ${activeGithubConnection.branch} into the workspace, inspect the result, and report what changed.`)} className="mt-2 w-full rounded-md bg-foreground px-2 py-1.5 text-[11px] font-medium text-background">Pull branch with SEA</button></div></section>}
-                    <section className="grid gap-1.5"><button type="button" onClick={() => setNewProjectOpen(true)} className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground"><Sparkles className="h-4 w-4" /> Start project</button><button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground"><FilePlus2 className="h-4 w-4" /> Add files</button><button type="button" onClick={() => setCurrentView("plugins")} className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground"><Plug className="h-4 w-4" /> Plugins</button><button type="button" onClick={() => setCurrentView("pullRequests")} className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground"><GitPullRequest className="h-4 w-4" /> Pull requests</button></section>
-                  </div>
-                </aside>
-              )}
+        {/* Top Bar */}
+        <header className="flex h-10 shrink-0 items-center gap-2 border-b border-[#2a2a2a] bg-[#161616] px-3">
+          <button
+            onClick={() => setSidebarOpen((open) => !open)}
+            className="rounded p-1 text-[#555] hover:bg-[#2a2a2a] hover:text-[#ccc] transition-colors"
+            aria-label="Toggle sidebar"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          </button>
+
+          {/* Breadcrumb */}
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 text-[11px]">
+            <span className="text-[#555]">sea</span>
+            {projectName && (
+              <>
+                <span className="text-[#444]">/</span>
+                <span className="truncate text-[#888]">{projectName}</span>
+              </>
+            )}
+            {activeGithubConnection && (
+              <>
+                <span className="text-[#444]">/</span>
+                <GitBranch className="h-3 w-3 text-[#555]" />
+                <span className="text-[#888]">{activeGithubConnection.branch}</span>
+              </>
+            )}
+          </div>
+
+          {/* Right actions */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setTerminalOpen((open) => !open)}
+              className={`flex items-center gap-1.5 rounded px-2 py-1 text-[11px] transition-colors ${terminalOpen ? "bg-orange-500/20 text-orange-400" : "text-[#555] hover:bg-[#2a2a2a] hover:text-[#ccc]"}`}
+              title="Toggle terminal"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              <span className="hidden sm:inline">Terminal</span>
+            </button>
+            <button
+              onClick={() => { setCurrentView("projects"); }}
+              className="flex items-center gap-1.5 rounded px-2 py-1 text-[11px] text-[#555] hover:bg-[#2a2a2a] hover:text-[#ccc] transition-colors"
+            >
+              <Folder className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Projects</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        {currentView === "projects" ? (
+          <div className="flex-1 overflow-auto">
+            <ProjectsView projects={projects} onNewProject={() => setNewProjectOpen(true)} onOpenFolder={() => folderInputRef.current?.click()} onOpenProject={openProject} onTogglePin={(id) => saveProjects(projects.map((project) => project.id === id ? { ...project, pinned: !project.pinned } : project))} onRemoveProject={(id) => saveProjects(projects.filter((project) => project.id !== id))} />
+          </div>
+        ) : currentView === "scheduled" ? (
+          <div className="flex-1 overflow-auto"><ScheduledView onRun={startNewTask} /></div>
+        ) : currentView === "plugins" ? (
+          <div className="flex-1 overflow-auto"><PluginsView enabled={enabledPlugins} onChange={setEnabledPlugins} /></div>
+        ) : currentView === "pullRequests" ? (
+          <div className="flex-1 overflow-auto"><PullRequestsView enabled={githubEnabled} /></div>
+        ) : (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {/* Chat Area */}
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <AgentChat
+                key={taskKey}
+                conversationId={activeConversationId}
+                activeFile={openFiles.find((file) => file.path === activeFilePath) || null}
+                workspaceFiles={enabledPlugins.includes("workspace") ? workspaceFiles : []}
+                initialPrompt={initialPrompt}
+                enabledPlugins={activePluginNames}
+                githubContext={activeGithubConnection ? { repository: activeGithubConnection.repository, branch: activeGithubConnection.branch } : null}
+                onConversationCreated={handleConversationCreated}
+                onReviewFile={reviewFile}
+                onOpenFolder={() => folderInputRef.current?.click()}
+                onAddFiles={() => fileInputRef.current?.click()}
+                onNewProject={() => setNewProjectOpen(true)}
+              />
             </div>
-          </>
+
+            {/* Terminal Panel */}
+            {terminalOpen && (
+              <div className="h-48 shrink-0 border-t border-[#2a2a2a]">
+                <AgentTerminal lines={terminalLines} />
+              </div>
+            )}
+          </div>
         )}
+
+        {/* Status Bar — Like Claude Code / VS Code */}
+        <div className="flex h-6 shrink-0 items-center gap-4 border-t border-[#2a2a2a] bg-[#161616] px-3 text-[10px] text-[#555]">
+          <span className="flex items-center gap-1.5">
+            <span className={`h-1.5 w-1.5 rounded-full ${true ? "bg-green-500" : "bg-yellow-500"}`} />
+            SEA
+          </span>
+          {projectName && <span className="text-[#444]">{projectName}</span>}
+          {workspaceFiles.length > 0 && <span className="text-[#444]">{workspaceFiles.length} files</span>}
+          <span className="ml-auto flex items-center gap-1">
+            <Wrench className="h-3 w-3" />
+            Skilled Eagle Agent
+          </span>
+        </div>
       </section>
 
+      {/* New Project Modal */}
       {newProjectOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-background/60 p-4 backdrop-blur-sm"><form onSubmit={(event) => { event.preventDefault(); void createProject(); }} className="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-2xl"><h2 className="font-semibold">Start a project</h2><p className="mt-1 text-xs text-muted-foreground">Choose a local folder after creating it. SEA will save the starter files there and keep a browser backup.</p><label className="mt-5 block text-xs text-muted-foreground">Project name</label><input autoFocus value={newProjectName} onChange={(event) => setNewProjectName(event.target.value)} placeholder="My project" className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none" /><label className="mt-4 block text-xs text-muted-foreground">Template</label><select value={template} onChange={(event) => setTemplate(event.target.value)} className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm"><option value="blank">Blank</option><option value="nextjs">Next.js</option><option value="python">Python</option></select><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setNewProjectOpen(false)} className="rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent">Cancel</button><button type="submit" className="rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-background">Choose folder & create</button></div></form></div>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+          <form onSubmit={(event) => { event.preventDefault(); void createProject(); }}
+            className="w-full max-w-md rounded-lg border border-[#333] bg-[#1e1e1e] p-5 shadow-2xl font-sans">
+            <h2 className="font-semibold text-[#e5e5e5]">New Project</h2>
+            <p className="mt-1 text-xs text-[#666]">SEA will save starter files to a local folder and keep a browser backup.</p>
+            <label className="mt-4 block text-xs text-[#666]">Project name</label>
+            <input autoFocus value={newProjectName} onChange={(event) => setNewProjectName(event.target.value)} placeholder="my-project" className="mt-1.5 w-full rounded border border-[#333] bg-[#161616] px-3 py-2 text-sm text-[#e5e5e5] outline-none focus:border-orange-500/60 placeholder:text-[#444]" />
+            <label className="mt-3 block text-xs text-[#666]">Template</label>
+            <select value={template} onChange={(event) => setTemplate(event.target.value)} className="mt-1.5 w-full rounded border border-[#333] bg-[#161616] px-3 py-2 text-sm text-[#e5e5e5] outline-none">
+              <option value="blank">Blank</option>
+              <option value="nextjs">Next.js</option>
+              <option value="python">Python</option>
+            </select>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setNewProjectOpen(false)} className="rounded px-3 py-2 text-sm text-[#666] hover:text-[#ccc] transition-colors">Cancel</button>
+              <button type="submit" className="rounded bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 transition-colors">Create</button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );
