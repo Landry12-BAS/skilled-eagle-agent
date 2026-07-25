@@ -41,7 +41,7 @@ docker-compose down -v
 cd backend
 
 # Create virtual environment
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
@@ -52,14 +52,14 @@ pip install -r requirements.txt
 cp .env.example .env
 
 # Run migrations
-python manage.py makemigrations
-python manage.py migrate
+python3 manage.py makemigrations
+python3 manage.py migrate
 
 # Create superuser
-python manage.py createsuperuser
+python3 manage.py createsuperuser
 
 # Run server
-python manage.py runserver
+python3 manage.py runserver
 ```
 
 ### Frontend (New Terminal)
@@ -117,22 +117,22 @@ Project name/
 ### Backend
 ```bash
 # Make migrations
-python manage.py makemigrations
+python3 manage.py makemigrations
 
 # Apply migrations
-python manage.py migrate
+python3 manage.py migrate
 
 # Create superuser
-python manage.py createsuperuser
+python3 manage.py createsuperuser
 
 # Run tests
-python manage.py test
+python3 manage.py test
 
 # Django shell
-python manage.py shell
+python3 manage.py shell
 
 # Collect static files (production)
-python manage.py collectstatic --noinput
+python3 manage.py collectstatic --noinput
 ```
 
 ### Frontend
@@ -239,7 +239,7 @@ curl -H "Authorization: Bearer <access_token>" \
 ## Troubleshooting
 
 ### "Connection refused" on frontend
-→ Backend not running? Start it: `python manage.py runserver`
+→ Backend not running? Start it: `python3 manage.py runserver`
 
 ### Docker permission denied
 ```bash
@@ -251,7 +251,7 @@ newgrp docker
 ### Port already in use
 ```bash
 # Backend on 8001 instead
-python manage.py runserver 8001
+python3 manage.py runserver 8001
 
 # Frontend on 3001 instead
 PORT=3001 npm run dev
@@ -282,4 +282,3 @@ docker-compose up  # Fresh database
 - Next.js Docs: https://nextjs.org/docs
 - Fly.io Docs: https://fly.io/docs
 - Vercel Docs: https://vercel.com/docs
-

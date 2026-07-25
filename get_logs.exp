@@ -1,0 +1,6 @@
+#!/usr/bin/expect -f
+set timeout 10
+spawn ssh -o PubkeyAuthentication=no -o StrictHostKeyChecking=no root@145.223.85.98 "cd /root/skilled-eagle-agent && docker-compose -f docker-compose.prod.yml logs --tail 50 caddy"
+expect "password:"
+send "L2wo77Js'S+?MuNy\r"
+expect eof
