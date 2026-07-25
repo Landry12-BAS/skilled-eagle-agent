@@ -75,7 +75,7 @@ npm run dev
 
 ---
 
-## Option 3: Production Deployment (Fly.io + Vercel) — 20 minutes
+## Option 3: Production Deployment (Hostinger VPS + Vercel) — 20 minutes
 
 See `DEPLOYMENT_GUIDE.md` for step-by-step instructions.
 
@@ -90,8 +90,7 @@ Project name/
 │   ├── apps/
 │   │   └── accounts/          # Auth (models, views, serializers)
 │   ├── Dockerfile             # Docker image for backend
-│   ├── fly.toml               # Fly.io config
-│   ├── requirements.txt        # Python dependencies
+│   │   ├── requirements.txt        # Python dependencies
 │   └── manage.py
 │
 ├── frontend/                   # Next.js project
@@ -271,7 +270,7 @@ docker-compose up  # Fresh database
 1. ✅ Run locally with Docker Compose
 2. ✅ Test register → login → dashboard flow
 3. ✅ Review Django Admin at /admin
-4. 🚀 Deploy to Fly.io + Vercel (see DEPLOYMENT_GUIDE.md)
+4. 🚀 Deploy to Hostinger VPS + Vercel (see DEPLOYMENT_GUIDE.md)
 5. 🎉 Share your app!
 
 ---
@@ -280,5 +279,5 @@ docker-compose up  # Fresh database
 
 - Django Docs: https://docs.djangoproject.com
 - Next.js Docs: https://nextjs.org/docs
-- Fly.io Docs: https://fly.io/docs
+- Hostinger Docs: https://www.hostinger.com/tutorials
 - Vercel Docs: https://vercel.com/docs

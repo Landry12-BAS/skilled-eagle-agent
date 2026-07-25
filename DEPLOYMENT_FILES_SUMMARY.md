@@ -17,15 +17,11 @@
 - **Purpose:** Excludes unnecessary files from Docker image
 - **Includes:** `*.pyc`, `__pycache__`, `.env`, `db.sqlite3`, etc.
 
-#### 3. `backend/fly.toml`
-- **Purpose:** Configuration for Fly.io deployment
+#### 3. `deploy.sh` & `run_vps.sh`
+- **Purpose:** Deployment scripts for Hostinger VPS
 - **Key configs:**
-  - App name: `landry-backend`
-  - Primary region: `iad` (US East Coast — change as needed)
-  - Health checks on `/api/health/`
-  - HTTP/HTTPS on ports 80/443
-  - Auto-runs `python manage.py migrate` on each deploy
-- **Deploy:** `flyctl deploy`
+  - SSH into VPS, pull latest code, rebuild Docker containers
+- **Deploy:** `./run_vps.sh`
 
 #### 4. `backend/.env.example` (Updated)
 - **Purpose:** Template for environment variables
@@ -75,7 +71,7 @@
 
 #### 9. `DEPLOYMENT_GUIDE.md`
 - **Step-by-step instructions for:**
-  - Deploying backend to Fly.io
+  - Deploying backend to Hostinger VPS
   - Deploying frontend to Vercel
   - Setting environment variables
   - Running migrations
@@ -116,11 +112,11 @@ docker-compose up
 ```
 GitHub Repo
     ↓
-Backend: Push → Fly.io deploys
+Backend: Push → Hostinger VPS deploys
     ↓
 Frontend: Push → Vercel deploys
     ↓
-PostgreSQL: Managed by Fly.io
+PostgreSQL: Managed by Hostinger VPS
     ↓
 Live at: https://landry-backend-xxx.fly.dev + https://landry.vercel.app
 ```
@@ -129,7 +125,7 @@ Live at: https://landry-backend-xxx.fly.dev + https://landry.vercel.app
 
 ## Environment Variables Checklist
 
-### Fly.io (Backend)
+### Hostinger VPS (Backend)
 ```bash
 flyctl secrets set \
   DEBUG=False \
@@ -193,7 +189,7 @@ if not DEBUG:
 - [ ] `frontend/.env.local` with correct API URL
 - [ ] Both repos pushed to GitHub
 - [ ] Vercel account created (free)
-- [ ] Fly.io account created (free)
+- [ ] Hostinger VPS account created (free)
 - [ ] `flyctl` CLI installed
 
 ---
@@ -219,7 +215,7 @@ Pillow==10.0.0
 | Service | Free Tier | Cost |
 |---------|-----------|------|
 | Vercel | 100GB bandwidth/month | $0 |
-| Fly.io | 3 VMs + 3GB RAM + 160GB storage | $0 |
+| Hostinger VPS | 3 VMs + 3GB RAM + 160GB storage | $0 |
 | **Total** | | **$0/month** |
 
 Upgrade only if needed (high traffic, more resources).
@@ -228,7 +224,7 @@ Upgrade only if needed (high traffic, more resources).
 
 ## Useful Commands
 
-### Fly.io
+### Hostinger VPS
 ```bash
 flyctl deploy                    # Deploy current code
 flyctl logs                      # View logs
@@ -265,7 +261,7 @@ docker-compose build             # Rebuild images
 1. **Read** `QUICK_START.md` for immediate setup
 2. **Test** locally with `docker-compose up`
 3. **Review** `DEPLOYMENT_GUIDE.md` before going live
-4. **Deploy** backend to Fly.io
+4. **Deploy** backend to Hostinger VPS
 5. **Deploy** frontend to Vercel
 6. **Test** end-to-end at production URLs
 
@@ -275,7 +271,7 @@ docker-compose build             # Rebuild images
 
 - [x] `backend/Dockerfile`
 - [x] `backend/.dockerignore`
-- [x] `backend/fly.toml`
+- [x] `deploy.sh / run_vps.sh`
 - [x] `backend/.env.example` (updated)
 - [x] `frontend/Dockerfile`
 - [x] `frontend/.dockerignore`
