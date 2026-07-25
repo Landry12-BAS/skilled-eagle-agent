@@ -43,10 +43,9 @@ function languageFor(filename: string) {
   return ({ ts: "typescript", tsx: "tsx", js: "javascript", jsx: "jsx", py: "python", json: "json", md: "markdown", css: "css", html: "html" } as Record<string, string>)[extension] || extension;
 }
 
-export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [terminalOpen, setTerminalOpen] = useState(false);
-  const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [inspectorOpen, setInspectorOpen] = useState(false); // Hidden by default (Kimi style)
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [currentView, setCurrentView] = useState<WorkspaceView>("chat");
   const [taskKey, setTaskKey] = useState(0);
@@ -307,15 +306,11 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
             <button className="ml-auto rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Search tasks"><Search className="h-4 w-4" /></button>
           </div>
           <div className="flex-1 space-y-2 overflow-y-auto px-2 py-3">
-            <button onClick={() => startNewTask()} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${currentView === "chat" ? "bg-accent/50" : "hover:bg-accent"}`}><SquarePen className="h-5 w-5 opacity-70" /><span>New task</span><span className="ml-auto flex items-center gap-0.5 rounded-md border border-border/50 bg-background/50 px-1.5 py-0.5 text-[11px] text-muted-foreground"><Command className="h-3 w-3" />N</span></button>
-            <div className="space-y-0.5 pt-2">
-              <div className={`group flex items-center rounded-xl pr-2 ${currentView === "projects" ? "bg-accent/50" : "hover:bg-accent"}`}><button onClick={() => { setCurrentView("projects"); if (window.innerWidth < 768) setSidebarOpen(false); }} className="flex flex-1 items-center gap-3 px-3 py-2.5 text-sm"><Folder className="h-5 w-5 opacity-70" />Projects</button><button onClick={() => setNewProjectOpen(true)} className="rounded-md p-1 hover:bg-background/80" aria-label="New project"><Plus className="h-4 w-4" /></button></div>
-              {navItems.map((item) => { const Icon = item.icon; return <button key={item.view} onClick={() => { setCurrentView(item.view); if (window.innerWidth < 768) setSidebarOpen(false); }} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${currentView === item.view ? "bg-accent/50" : "hover:bg-accent"}`}><Icon className="h-5 w-5 opacity-70" />{item.label}</button>; })}
-            </div>
+            <button onClick={() => startNewTask()} className="mb-4 flex w-full items-center justify-center gap-2 rounded-full bg-foreground px-4 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/90"><Plus className="h-4 w-4" /><span>New Task</span></button>
             
-            <div className="pt-6 pb-2">
-              <div className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Tasks
+            <div className="pt-2 pb-2">
+              <div className="px-3 mb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Recent Tasks
               </div>
               <div className="space-y-0.5">
                 {conversationsLoading ? (
@@ -331,9 +326,9 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
                         setCurrentView("chat");
                         if (window.innerWidth < 768) setSidebarOpen(false);
                       }}
-                      className={`flex w-full flex-col items-start gap-0.5 rounded-xl px-3 py-2 text-left transition-colors ${currentView === "chat" && activeConversationId === conv.id ? "bg-accent/50" : "hover:bg-accent"}`}
+                      className={`flex w-full flex-col items-start gap-0.5 rounded-lg px-3 py-2.5 text-left transition-colors ${currentView === "chat" && activeConversationId === conv.id ? "bg-accent/70" : "hover:bg-accent/40"}`}
                     >
-                      <span className="text-sm font-medium line-clamp-1">{conv.title || "New Task"}</span>
+                      <span className="text-[13px] font-medium line-clamp-1">{conv.title || "New Task"}</span>
                       <span className="text-[10px] text-muted-foreground">
                         {new Date(conv.updated_at).toLocaleDateString()}
                       </span>
@@ -341,6 +336,16 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
                   ))
                 )}
               </div>
+            </div>
+
+            <div className="my-4 border-t border-border/50" />
+            
+            <div className="px-3 mb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Workspace
+            </div>
+            <div className="space-y-0.5 pt-1">
+              <div className={`group flex items-center rounded-lg pr-2 ${currentView === "projects" ? "bg-accent/50" : "hover:bg-accent/40"}`}><button onClick={() => { setCurrentView("projects"); if (window.innerWidth < 768) setSidebarOpen(false); }} className="flex flex-1 items-center gap-3 px-3 py-2 text-[13px]"><Folder className="h-4 w-4 opacity-70" />Projects</button><button onClick={() => setNewProjectOpen(true)} className="rounded-md p-1 hover:bg-background/80" aria-label="New project"><Plus className="h-3 w-3" /></button></div>
+              {navItems.map((item) => { const Icon = item.icon; return <button key={item.view} onClick={() => { setCurrentView(item.view); if (window.innerWidth < 768) setSidebarOpen(false); }} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-colors ${currentView === item.view ? "bg-accent/50" : "hover:bg-accent/40"}`}><Icon className="h-4 w-4 opacity-70" />{item.label}</button>; })}
             </div>
           </div>
           <div className="border-t border-border p-2"><button onClick={onOpenSettings} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"><Settings className="h-4 w-4" /> Settings</button></div>
@@ -359,32 +364,15 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
           <PullRequestsView enabled={githubEnabled} />
         ) : (
           <>
-            <header className="flex h-12 shrink-0 items-center border-b border-border bg-muted/50 px-2 sm:px-3">
+            <header className="flex h-12 shrink-0 items-center border-b border-border bg-background px-2 sm:px-4">
               <button onClick={() => setSidebarOpen((open) => !open)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"} aria-pressed={sidebarOpen}><PanelLeft className="h-5 w-5" strokeWidth={1.8} /></button>
-              <div className="ml-2 min-w-0"><h1 className="truncate text-[13px] font-medium">{projectName || "New task"}</h1><div className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">{projectName || activeGithubConnection ? <><span>{projectName || activeGithubConnection?.repository}</span>{activeGithubConnection && <><span>·</span><GitBranch className="h-3 w-3" /><span>{activeGithubConnection.branch}</span><ChevronDown className="h-3 w-3" /></>}</> : <span>No project</span>}</div></div>
-              <div className="relative ml-auto flex shrink-0 items-center gap-1">
-                <button onClick={() => setSummaryOpen((open) => !open)} className={`rounded-md p-1.5 ${summaryOpen ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={summaryOpen ? "Hide summary" : "Show summary"} title={summaryOpen ? "Hide summary" : "Show summary"}><SlidersHorizontal className="h-4 w-4" /></button>
-                <button onClick={() => setTerminalOpen((open) => !open)} className={`rounded-md p-1.5 ${terminalOpen ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={terminalOpen ? "Hide terminal" : "Show terminal"} title={terminalOpen ? "Hide terminal" : "Show terminal"}>{terminalOpen ? <PanelBottomClose className="h-4 w-4" /> : <PanelBottomOpen className="h-4 w-4" />}</button>
-                <button onClick={() => setInspectorOpen((open) => !open)} className={`rounded-md p-1.5 ${inspectorOpen ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={inspectorOpen ? "Hide workspace panel" : "Show workspace panel"} title={inspectorOpen ? "Hide workspace panel" : "Show workspace panel"}>{inspectorOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}</button>
+              <div className="ml-3 min-w-0 flex-1"><h1 className="truncate text-sm font-medium">{projectName || "New task"}</h1></div>
+              <div className="relative ml-auto flex shrink-0 items-center gap-1.5">
+                <button onClick={() => setTerminalOpen((open) => !open)} className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${terminalOpen ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={terminalOpen ? "Hide terminal" : "Show terminal"} title={terminalOpen ? "Hide terminal" : "Show terminal"}>{terminalOpen ? <PanelBottomClose className="h-4 w-4" /> : <PanelBottomOpen className="h-4 w-4" />} <span className="hidden sm:inline">Terminal</span></button>
+                <button onClick={() => setInspectorOpen((open) => !open)} className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${inspectorOpen ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`} aria-label={inspectorOpen ? "Hide workspace" : "Show workspace"} title={inspectorOpen ? "Hide workspace" : "Show workspace"}>{inspectorOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />} <span className="hidden sm:inline">Workspace</span></button>
               </div>
             </header>
-            {summaryOpen && (
-              <div className="shrink-0 border-b border-border bg-card/70 px-4 py-3">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="rounded-md border border-border bg-background px-2 py-1">Summary</span>
-                  <span className="rounded-md border border-border bg-background px-2 py-1">{projectName || "No project"}</span>
-                  {activeGithubConnection && <span className="rounded-md border border-border bg-background px-2 py-1">{activeGithubConnection.repository}:{activeGithubConnection.branch}</span>}
-                  <span className="rounded-md border border-border bg-background px-2 py-1">{workspaceFiles.length} files</span>
-                  <span className="rounded-md border border-border bg-background px-2 py-1">{activePluginNames.length} plugins</span>
-                  <div className="ml-auto flex flex-wrap items-center gap-1.5">
-                    <button type="button" onClick={() => startNewTask()} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 hover:bg-accent hover:text-foreground"><SquarePen className="h-3.5 w-3.5" /> New task</button>
-                    <button type="button" onClick={() => setNewProjectOpen(true)} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 hover:bg-accent hover:text-foreground"><Sparkles className="h-3.5 w-3.5" /> Start project</button>
-                    <button type="button" onClick={() => folderInputRef.current?.click()} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 hover:bg-accent hover:text-foreground"><FolderOpen className="h-3.5 w-3.5" /> Open folder</button>
-                    <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 hover:bg-accent hover:text-foreground"><FilePlus2 className="h-3.5 w-3.5" /> Add files</button>
-                  </div>
-                </div>
-              </div>
-            )}
+
             <div className="flex min-h-0 flex-1 overflow-hidden">
               <div className="flex min-w-0 flex-1 flex-col">
                 <div className="min-h-0 flex-1">
