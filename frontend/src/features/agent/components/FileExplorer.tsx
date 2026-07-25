@@ -1,9 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ChevronRight, ChevronDown, FileText, FileCode2, Settings, File } from "lucide-react";
+import { Search, ChevronRight, ChevronDown, FileText, FileCode2, Settings, File, FolderOpen, Folder } from "lucide-react";
+
+interface WorkspaceFile {
+  path: string;
+  content: string;
+  language: string;
+}
 
 interface FileExplorerProps {
+  files: WorkspaceFile[];
   onFileSelect: (path: string) => void;
 }
 
@@ -14,90 +21,39 @@ interface FileNode {
   children?: FileNode[];
 }
 
-const FILE_TREE: FileNode[] = [
-  {
-    name: "src",
-    type: "folder",
-    path: "src",
-    children: [
-      {
-        name: "app",
-        type: "folder",
-        path: "src/app",
-        children: [
-          { name: "page.tsx", type: "file", path: "src/app/page.tsx" },
-          { name: "layout.tsx", type: "file", path: "src/app/layout.tsx" },
-          { name: "globals.css", type: "file", path: "src/app/globals.css" },
-        ],
-      },
-      {
-        name: "features",
-        type: "folder",
-        path: "src/features",
-        children: [
-          {
-            name: "chat",
-            type: "folder",
-            path: "src/features/chat",
-            children: [
-              {
-                name: "components",
-                type: "folder",
-                path: "src/features/chat/components",
-                children: [
-                  { name: "ChatInterface.tsx", type: "file", path: "src/features/chat/components/ChatInterface.tsx" },
-                  { name: "ConversationSidebar.tsx", type: "file", path: "src/features/chat/components/ConversationSidebar.tsx" },
-                ],
-              },
-            ],
-          },
-          {
-            name: "agent",
-            type: "folder",
-            path: "src/features/agent",
-            children: [
-              {
-                name: "components",
-                type: "folder",
-                path: "src/features/agent/components",
-                children: [
-                  { name: "SEAInterface.tsx", type: "file", path: "src/features/agent/components/SEAInterface.tsx" },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      {
-        name: "components",
-        type: "folder",
-        path: "src/components",
-        children: [
-          {
-            name: "ui",
-            type: "folder",
-            path: "src/components/ui",
-            children: [
-              { name: "button.tsx", type: "file", path: "src/components/ui/button.tsx" },
-              { name: "input.tsx", type: "file", path: "src/components/ui/input.tsx" },
-            ],
-          },
-        ],
-      },
-      {
-        name: "lib",
-        type: "folder",
-        path: "src/lib",
-        children: [
-          { name: "api-client.ts", type: "file", path: "src/lib/api-client.ts" },
-          { name: "utils.ts", type: "file", path: "src/lib/utils.ts" },
-        ],
-      },
-    ],
-  },
-  { name: "package.json", type: "file", path: "package.json" },
-  { name: "tsconfig.json", type: "file", path: "tsconfig.json" },
-];
+function buildFileTree(files: WorkspaceFile[]): FileNode[] {
+  const root: FileNode[] = [];
+  const nodeMap = new Map<string, FileNode>();
+
+  for (const file of files) {
+    const parts = file.path.split("/");
+    let currentLevel = root;
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const currentPath = parts.slice(0, i + 1).join("/");
+      const isFile = i === parts.length - 1;
+
+      if (!nodeMap.has(currentPath)) {
+        const node: FileNode = {
+          name: part,
+          type: isFile ? "file" : "folder",
+          path: currentPath,
+          children: isFile ? undefined : [],
+        };
+        nodeMap.set(currentPath, node);
+        currentLevel.push(node);
+      }
+
+      if (!isFile) {
+        const folderNode = nodeMap.get(currentPath)!;
+        currentLevel = folderNode.children!;
+      }
+    }
+  }
+
+  return root;
+}
 
 function getFileIcon(name: string) {
   if (name.endsWith(".ts") || name.endsWith(".tsx")) {
@@ -109,15 +65,21 @@ function getFileIcon(name: string) {
   if (name.endsWith(".json")) {
     return <Settings className="w-3.5 h-3.5 text-yellow-400" />;
   }
+  if (name.endsWith(".py")) {
+    return <FileCode2 className="w-3.5 h-3.5 text-green-400" />;
+  }
+  if (name.endsWith(".md")) {
+    return <FileText className="w-3.5 h-3.5 text-gray-400" />;
+  }
   return <File className="w-3.5 h-3.5 text-muted-foreground" />;
 }
 
-export function FileExplorer({ onFileSelect }: FileExplorerProps) {
+export function FileExplorer({ files, onFileSelect }: FileExplorerProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set(["src", "src/app", "src/features", "src/features/agent", "src/features/agent/components"])
-  );
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+
+  const fileTree = buildFileTree(files);
 
   const toggleFolder = (path: string) => {
     setExpandedFolders((prev) => {
@@ -136,9 +98,13 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
     onFileSelect(path);
   };
 
-  const renderNode = (node: FileNode, depth: number = 0) => {
-    // Basic search filtering (simplistic)
-    if (searchTerm && node.type === "file" && !node.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+  const renderNode = (node: FileNode, depth: number = 0): React.ReactNode => {
+    if (
+      searchTerm &&
+      node.type === "file" &&
+      !node.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !node.path.toLowerCase().includes(searchTerm.toLowerCase())
+    ) {
       return null;
     }
 
@@ -147,11 +113,9 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
     const paddingLeft = `${depth * 12 + 8}px`;
 
     if (node.type === "folder") {
-      // If we are searching, and no children match, maybe hide folder. 
-      // For simplicity, we just render it. A robust search would filter out empty folders.
-      const childrenNodes = node.children?.map(child => renderNode(child, depth + 1)).filter(Boolean);
+      const childrenNodes = node.children?.map((child) => renderNode(child, depth + 1)).filter(Boolean);
       if (searchTerm && (!childrenNodes || childrenNodes.length === 0)) {
-         return null;
+        return null;
       }
 
       return (
@@ -165,6 +129,11 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
               <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             ) : (
               <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            )}
+            {isExpanded ? (
+              <FolderOpen className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+            ) : (
+              <Folder className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
             )}
             <span className="truncate select-none">{node.name}</span>
           </div>
@@ -188,6 +157,16 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
     );
   };
 
+  if (files.length === 0) {
+    return (
+      <div className="flex flex-col h-full bg-card items-center justify-center p-4 text-center">
+        <FolderOpen className="w-8 h-8 text-muted-foreground mb-2 opacity-50" />
+        <p className="text-xs text-muted-foreground">No files loaded.</p>
+        <p className="text-xs text-muted-foreground mt-1">Open a folder or add files to get started.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-card">
       <div className="p-2 border-b border-border">
@@ -203,7 +182,7 @@ export function FileExplorer({ onFileSelect }: FileExplorerProps) {
         </div>
       </div>
       <div className="flex-1 overflow-y-auto py-2 custom-scrollbar">
-        {FILE_TREE.map((node) => renderNode(node))}
+        {fileTree.map((node) => renderNode(node))}
       </div>
     </div>
   );

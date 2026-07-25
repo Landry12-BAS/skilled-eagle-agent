@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, InputHTMLAttributes } from "react";
 import { Bot, ChevronDown, Clock, Command, FilePlus2, Folder, FolderOpen, GitBranch, GitPullRequest, PanelBottomClose, PanelBottomOpen, PanelLeft, PanelRightClose, PanelRightOpen, Plug, Plus, Search, Settings, SlidersHorizontal, Sparkles, SquarePen } from "lucide-react";
+import { FileExplorer } from "./FileExplorer";
 import { AgentChat } from "./AgentChat";
 import { CodeEditor } from "./CodeEditor";
 import { AgentTerminal } from "./AgentTerminal";
@@ -398,7 +399,21 @@ export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }
                     <section className="h-80 min-h-0 overflow-hidden rounded-lg border border-border bg-background">
                       <CodeEditor openFiles={openFiles} activeFile={activeFilePath} onTabSelect={setActiveFilePath} onTabClose={closeOpenFile} />
                     </section>
-                    <section><div className="mb-2 flex items-center justify-between text-xs text-muted-foreground"><span>Files</span><span>{workspaceFiles.length}</span></div><div className="space-y-1.5">{workspaceFiles.slice(0, 6).map((file) => <button type="button" key={file.path} onClick={() => reviewFile(file)} className="w-full truncate rounded-md border border-border/70 bg-background px-2 py-1.5 text-left font-mono text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground">{file.path}</button>)}{workspaceFiles.length === 0 && <button type="button" onClick={() => folderInputRef.current?.click()} className="w-full rounded-md border border-dashed border-border px-2 py-3 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">Open folder</button>}</div></section>
+                    <section>
+                      <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Files</span>
+                        <span>{workspaceFiles.length}</span>
+                      </div>
+                      <div className="h-56 min-h-0 overflow-hidden rounded-lg border border-border bg-background">
+                        <FileExplorer
+                          files={workspaceFiles}
+                          onFileSelect={(path) => {
+                            const file = workspaceFiles.find((f) => f.path === path);
+                            if (file) reviewFile(file);
+                          }}
+                        />
+                      </div>
+                    </section>
                     <section><div className="mb-2 text-xs text-muted-foreground">Plugins</div><div className="flex flex-wrap gap-1.5">{activePluginNames.length ? activePluginNames.map((name) => <span key={name} className="rounded-md border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground">{name}</span>) : <span className="text-xs text-muted-foreground">None</span>}</div></section>
                     {activeGithubConnection && <section><div className="mb-2 text-xs text-muted-foreground">GitHub</div><div className="rounded-md border border-border/70 bg-background p-2"><p className="truncate font-mono text-[11px] text-muted-foreground">{activeGithubConnection.repository}</p><select value={activeGithubConnection.branch} onChange={(event) => selectGitHubBranch(event.target.value)} className="mt-2 w-full rounded-md border border-border bg-card px-2 py-1.5 text-[11px] outline-none">{activeGithubConnection.branches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}</select><button type="button" onClick={() => startNewTask(`Pull ${activeGithubConnection.repository} branch ${activeGithubConnection.branch} into the workspace, inspect the result, and report what changed.`)} className="mt-2 w-full rounded-md bg-foreground px-2 py-1.5 text-[11px] font-medium text-background">Pull branch with SEA</button></div></section>}
                     <section className="grid gap-1.5"><button type="button" onClick={() => setNewProjectOpen(true)} className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground"><Sparkles className="h-4 w-4" /> Start project</button><button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground"><FilePlus2 className="h-4 w-4" /> Add files</button><button type="button" onClick={() => setCurrentView("plugins")} className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground"><Plug className="h-4 w-4" /> Plugins</button><button type="button" onClick={() => setCurrentView("pullRequests")} className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground"><GitPullRequest className="h-4 w-4" /> Pull requests</button></section>

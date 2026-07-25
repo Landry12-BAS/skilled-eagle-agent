@@ -284,6 +284,7 @@ class SEAConsumer(AsyncWebsocketConsumer):
                 "- read_file: Read file contents. Arguments: {\"path\": \"<file_path>\"}\n"
                 "- write_file: Create or overwrite a file only when a local workspace is mounted. Arguments: {\"path\": \"<file_path>\", \"content\": \"<content>\"}\n"
                 "- list_dir: List directory contents. Arguments: {\"path\": \"<directory_path>\"}\n"
+                "- run_shell: Execute a shell command in the workspace terminal. Use this for running tests, installing packages, running scripts, checking git status, or any other command-line task. Arguments: {\"command\": \"<shell command>\"}\n"
                 "Do not use a local write tool for a deployed frontend when GitHub is connected; use github_write_file so the change is committed and Vercel can deploy it.\n\n"
                 "=== WORKSPACE ROUTING RULES ===\n"
                 "This product is a split application:\n"
