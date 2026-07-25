@@ -1,0 +1,16 @@
+/* AI Admin — provider model loader styles */
+#model-load-status {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+#id_model_name {
+  min-width: 380px;
+  transition: opacity 0.2s;
+}
+
+#id_model_name:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}

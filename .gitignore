@@ -22,7 +22,6 @@ htmlcov/
 # Django/runtime data
 backend/media/
 backend/static/
-backend/staticfiles/
 chroma_db/
 
 # Node/Next
