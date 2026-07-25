@@ -43,6 +43,7 @@ function languageFor(filename: string) {
   return ({ ts: "typescript", tsx: "tsx", js: "javascript", jsx: "jsx", py: "python", json: "json", md: "markdown", css: "css", html: "html" } as Record<string, string>)[extension] || extension;
 }
 
+export function SEAInterface({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false); // Hidden by default (Kimi style)
