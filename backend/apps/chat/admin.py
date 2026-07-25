@@ -4,7 +4,7 @@ from django.utils.timezone import localtime
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.decorators import action
 from django.shortcuts import redirect
-from .models import Conversation, ChatMessage
+from .models import Conversation, ChatMessage, ChatConversation, SEAConversation
 
 
 class ChatMessageInline(TabularInline):
@@ -31,7 +31,6 @@ class ChatMessageInline(TabularInline):
     content_preview.short_description = "Content"
 
 
-@admin.register(Conversation)
 class ConversationAdmin(ModelAdmin):
     list_display  = ("title_display", "user", "message_count", "created_at", "updated_at", "delete_icon")
     list_filter   = ("user",)
@@ -65,13 +64,15 @@ class ConversationAdmin(ModelAdmin):
         if conv:
             conv.delete()
             self.message_user(request, "✓ Conversation deleted.")
-        return redirect("admin:chat_conversation_changelist")
+        return redirect(f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist")
 
     @admin.display(description="")
     def delete_icon(self, obj):
+        from django.urls import reverse
         # A direct, clickable red trash can icon linking straight to the delete confirmation page
+        url = reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete", args=[obj.pk])
         return format_html(
-            '<a href="/admin/chat/conversation/{}/delete/" '
+            '<a href="{}" '
             'class="text-red-500 hover:text-red-700 transition-colors" '
             'title="Delete Conversation">'
             '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
@@ -79,7 +80,7 @@ class ConversationAdmin(ModelAdmin):
             '<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>'
             '<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>'
             '</svg></a>',
-            obj.pk
+            url
         )
 
     # ── Display helpers ───────────────────────────────────────────────────────
@@ -96,6 +97,18 @@ class ConversationAdmin(ModelAdmin):
             'border-radius:9999px;font-size:12px;font-weight:600">{}</span>',
             count
         )
+
+
+@admin.register(ChatConversation)
+class ChatConversationAdmin(ConversationAdmin):
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(kind=Conversation.KIND_CHAT)
+
+
+@admin.register(SEAConversation)
+class SEAConversationAdmin(ConversationAdmin):
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(kind=Conversation.KIND_SEA)
 
 
 @admin.register(ChatMessage)

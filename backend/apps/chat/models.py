@@ -53,3 +53,17 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"[{self.role}] {self.content[:60]}"
+
+
+class ChatConversation(Conversation):
+    class Meta:
+        proxy = True
+        verbose_name = "AI Chat Conversation"
+        verbose_name_plural = "AI Chat Conversations"
+
+
+class SEAConversation(Conversation):
+    class Meta:
+        proxy = True
+        verbose_name = "SEA Task"
+        verbose_name_plural = "SEA Tasks"
