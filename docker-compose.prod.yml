@@ -11,7 +11,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
-      - backend_static:/app/staticfiles
+      - backend_static:/app/static
       - backend_media:/app/media
     dns:
       - 8.8.8.8
@@ -31,7 +31,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     volumes:
-      - backend_static:/app/staticfiles
+      - backend_static:/app/static
       - backend_media:/app/media
     env_file:
       - .env.prod

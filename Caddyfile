@@ -1,7 +1,7 @@
 api.skilledeagle.tech {
     # Serve static files
     handle_path /static/* {
-        root * /app/staticfiles
+        root * /app/static
         file_server
     }
 
